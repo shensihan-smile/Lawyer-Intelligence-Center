@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Database (contains real user data)
+*.db
+*.sqlite3
+backend/app/data/
+
+# Secrets & config
+.env
+*.pem
+*.key
+
+# Build output
+dist/
+build/
+out/
+*.exe
+*.msi
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.log
+/tmp/
+temp/
+*.tmp
+backend/app/data/temp/
+
+# Electron
+frontend/node_modules/
+frontend/dist/
