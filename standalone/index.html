@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>律师智能中心</title>
+<link rel="stylesheet" href="https://unpkg.com/antd@5.12.8/dist/reset.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5}
+.logo{font-size:18px;font-weight:700;padding:16px 24px;white-space:nowrap;overflow:hidden}
+.logo.collapsed{font-size:14px;padding:16px 12px;text-align:center}
+.login-bg{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)}
+.login-card{width:420px;background:#fff;border-radius:16px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.stat-card{cursor:pointer;transition:all .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.page-title{margin-bottom:16px!important}
+.calendar-cell{min-height:80px;padding:4px 6px;cursor:pointer;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0}
+.calendar-cell:hover{background:#fafafa}
+.calendar-cell.today{background:#e6f4ff}
+.calendar-cell.other-month{opacity:.4}
+.calendar-date{font-size:13px;margin-bottom:4px}
+.calendar-date.today{color:#1677ff;font-weight:700}
+.schedule-dot{font-size:10px;padding:1px 4px;margin-bottom:2px;border-radius:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
+.schedule-dot.conflict{background:#fff2f0;color:#ff4d4f;border-left:3px solid #ff4d4f}
+.schedule-dot.normal{background:#e6f4ff;color:#1677ff;border-left:3px solid #1677ff}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js" crossorigin></script>
+<script src="https://unpkg.com/antd@5.12.8/dist/antd.min.js" crossorigin></script>
+<script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js" crossorigin></script>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext, Fragment } = React;
+const { render } = ReactDOM;
+const dayjs = window.dayjs;
+
+// ==================== 解构 antd 组件 ====================
+const {
+  Typography:{Title,Text,Paragraph}, Card, Table, Button, Input, Space, Modal, Form,
+  Select, Tag, Popconfirm, message, Tabs, Upload, DatePicker, TimePicker,
+  Segmented, Alert, Empty, Divider, Descriptions, List, Row, Col, Statistic,
+  Switch, Radio, Slider, InputNumber, Layout, Menu, Avatar, Dropdown, Spin,
+  Calendar, Badge, Tooltip, Drawer, Popover,
+} = antd;
+
+const { TextArea, Password, Search } = Input;
+const { Sider, Content, Header } = Layout;
+const { Dragger } = Upload;
+const { RangePicker } = DatePicker;
+const { CheckCircleOutlined, StopOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
+  SearchOutlined, ReloadOutlined, DashboardOutlined, MessageOutlined, FolderOpenOutlined,
+  FileTextOutlined, CalendarOutlined, DollarOutlined, SettingOutlined, UserOutlined,
+  LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, LockOutlined,
+  ExperimentOutlined, InboxOutlined, DownloadOutlined, EyeOutlined, ThunderboltOutlined,
+  ClockCircleOutlined, EnvironmentOutlined, ExportOutlined, PlayCircleOutlined,
+  PauseCircleOutlined, FilePdfOutlined, SwapOutlined, PictureOutlined,
+  CheckCircleOutlined, StopOutlined, FileWordOutlined } = icons;
+
+// ==================== 数据层 (localStorage) ====================
+const STORAGE_KEY = 'lawyer_center_';
+const DB = {
+  get(table) {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY + table) || '[]'); }
+    catch { return []; }
+  },
+  set(table, data) { localStorage.setItem(STORAGE_KEY + table, JSON.stringify(data)); },
+  nextId(table) { const items = this.get(table); return items.length > 0 ? Math.max(...items.map(x=>x.id)) + 1 : 1; },
+  add(table, item) { const items = this.get(table); item.id = this.nextId(table); item.created_at = dayjs().format('YYYY-MM-DD HH:mm:ss'); item.updated_at = item.created_at; items.push(item); this.set(table, items); return item; },
+  update(table, id, updates) { const items = this.get(table); const idx = items.findIndex(x=>x.id===id); if(idx<0)return null; items[idx]={...items[idx],...updates,updated_at:dayjs().format('YYYY-MM-DD HH:mm:ss')}; this.set(table, items); return items[idx]; },
+  delete(table, id) { this.set(table, this.get(table).filter(x=>x.id!==id)); },
+};
+
+// 初始化默认数据
+function initData() {
+  const users = DB.get('users');
+  if (users.length === 0) {
+    DB.add('users', { username: 'admin', password: 'admin123', real_name: '管理员', role: 'admin', phone: '', email: '', is_active: true });
+    DB.add('users', { username: 'demo', password: 'demo123', real_name: '体验用户', role: 'lawyer', phone: '', email: '', is_active: true });
+  }
+  if (DB.get('billing_config').length === 0) {
+    DB.add('billing_config', { name: '默认小时费率', billing_method: 'hourly', unit_price: 2000, is_default: true, notes: '' });
+  }
+}
+initData();
+
+// ==================== 上下文 ====================
+const AuthContext = createContext(null);
+function useAuth() { return useContext(AuthContext); }
+
+// ==================== 工具函数 ====================
+const ROLE_LABELS = { admin: '管理员', lawyer: '律师', assistant: '助理' };
+const ROLE_COLORS = { admin: 'red', lawyer: 'blue', assistant: 'green' };
+const STAGE_LABELS = { intake:'接案', filing:'立案', trial:'审理中', judgment:'判决', enforcement:'执行', closed:'结案' };
+const STAGE_COLORS = { intake:'purple', filing:'geekblue', trial:'blue', judgment:'orange', enforcement:'volcano', closed:'green' };
+const WORK_LABELS = { legal_research:'法律研究', drafting:'文书起草', hearing:'庭审出庭', consultation:'客户咨询', other:'其他' };
+const METHOD_LABELS = { hourly:'按小时', fixed:'按件', percentage:'按比例' };
+const STATUS_LABELS = { draft:'草稿', generated:'已生成', exported:'已导出', paid:'已收款' };
+const STATUS_COLORS = { draft:'default', generated:'blue', exported:'orange', paid:'green' };
+const SCHEDULE_TYPE_LABELS = { hearing:'开庭', meeting:'会议', consultation:'咨询', deadline:'截止日期', other:'其他' };
+const DOC_CATEGORY_LABELS = { legal_opinion:'法律意见书', contract_draft:'合同草案', complaint:'起诉状', defense:'答辩状', proxy_statement:'代理词', evidence_list:'证据清单', other:'其他' };
+const TYPE_COLORS = { hearing:'red', meeting:'blue', consultation:'green', deadline:'orange', other:'default' };
+
+function formatDuration(mins) {
+  if (!mins || mins <= 0) return '0分钟';
+  if (mins < 60) return `${mins}分钟`;
+  const h = Math.floor(mins/60), m = mins%60;
+  return m>0 ? `${h}小时${m}分钟` : `${h}小时`;
+}
+function randomId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ==================== 登录页 ====================
+function LoginPage() {
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const { login } = useAuth();
+
+  const doLogin = async (username, password) => {
+    setLoading(true);
+    try {
+      const users = DB.get('users');
+      const user = users.find(u => u.username === username && u.password === password);
+      if (!user) { message.error('用户名或密码错误'); setLoading(false); return; }
+      if (!user.is_active) { message.error('账号已被停用'); setLoading(false); return; }
+      login(user);
+      message.success(`欢迎，${user.real_name}`);
+    } finally { setLoading(false); }
+  };
+
+  const handleDemoLogin = () => { form.setFieldsValue({username:'demo',password:'demo123'}); doLogin('demo','demo123'); };
+
+  return (
+    <div className="login-bg">
+      <div className="login-card">
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <Title level={2} style={{color:'#1a1a2e',marginBottom:4}}>⚖ 律师智能中心</Title>
+          <Text type="secondary">智能化律师工作平台</Text>
+        </div>
+        <Button type="primary" icon={<ExperimentOutlined/>} onClick={handleDemoLogin} loading={loading}
+          block size="large" style={{height:48,background:'linear-gradient(135deg,#52c41a,#73d13d)',border:'none',fontSize:16,fontWeight:600,marginBottom:16}}>
+          一键体验（免输账号）
+        </Button>
+        <Divider plain><Text type="secondary" style={{fontSize:12}}>或使用账号密码登录</Text></Divider>
+        <Form form={form} onFinish={(v)=>doLogin(v.username,v.password)} size="large">
+          <Form.Item name="username" rules={[{required:true,message:'请输入用户名'}]}>
+            <Input prefix={<UserOutlined/>} placeholder="用户名"/>
+          </Form.Item>
+          <Form.Item name="password" rules={[{required:true,message:'请输入密码'}]}>
+            <Input.Password prefix={<LockOutlined/>} placeholder="密码"/>
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} block style={{background:'#1a1a2e'}}>登 录</Button>
+        </Form>
+        <div style={{marginTop:20,padding:'12px 16px',background:'#f6f8fa',borderRadius:6}}>
+          <Text type="secondary" style={{fontSize:12}}>📋 demo / demo123 — 体验账号 &nbsp;|&nbsp; admin / admin123 — 管理员</Text>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== 主导航布局 ====================
+const MENU_ITEMS = [
+  { key:'dashboard', icon:<DashboardOutlined/>, label:'工作台' },
+  { key:'communication', icon:<MessageOutlined/>, label:'智能通信' },
+  { key:'cases', icon:<FolderOpenOutlined/>, label:'案件与文档' },
+  { key:'documents', icon:<FileTextOutlined/>, label:'文档处理' },
+  { key:'schedule', icon:<CalendarOutlined/>, label:'日程与庭审' },
+  { key:'billing', icon:<DollarOutlined/>, label:'财务管理' },
+  { key:'system', icon:<SettingOutlined/>, label:'系统管理' },
+];
+
+function MainLayout({children, currentPage, onNavigate}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  const userMenu = {
+    items: [
+      { key:'profile', icon:<UserOutlined/>, label: `${user?.real_name || ''} (${ROLE_LABELS[user?.role] || ''})`, disabled: true },
+      { key:'logout', icon:<LogoutOutlined/>, label:'退出登录', danger:true },
+    ],
+    onClick: (info) => { if (info.key === 'logout') logout(); },
+  };
+
+  return (
+    <Layout style={{minHeight:'100vh'}}>
+      <Sider trigger={null} collapsible collapsed={collapsed} width={200}
+        style={{background:'#001529',borderRight:'1px solid #002140'}}>
+        <div className={`logo ${collapsed?'collapsed':''}`} style={{color:'#fff',borderBottom:'1px solid #002140'}}>
+          {collapsed ? '⚖' : '⚖ 律师智能中心'}
+        </div>
+        <Menu theme="dark" mode="inline" selectedKeys={[currentPage]}
+          items={MENU_ITEMS} onClick={({key})=>onNavigate(key)}
+          style={{background:'transparent'}}/>
+      </Sider>
+      <Layout>
+        <Header style={{padding:'0 24px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #f0f0f0',height:56}}>
+          <Button type="text" icon={collapsed?<MenuUnfoldOutlined/>:<MenuFoldOutlined/>} onClick={()=>setCollapsed(!collapsed)}/>
+          <Dropdown menu={userMenu}>
+            <div style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+              <Avatar icon={<UserOutlined/>} style={{background:isAdmin?'#1677ff':'#52c41a'}}/>
+              <span>{user?.real_name || ''}</span>
+            </div>
+          </Dropdown>
+        </Header>
+        <Content style={{margin:0,padding:24,background:'#f5f5f5',minHeight:280,overflow:'auto'}}>
+          {children}
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
+
+// ==================== 工作台 ====================
+function DashboardPage() {
+  const [stats, setStats] = useState({cases:0,hearings:0,docs:0,bills:0});
+  const [recent, setRecent] = useState({cases:[],hearings:[]});
+
+  useEffect(() => {
+    const cases = DB.get('cases');
+    const schedules = DB.get('schedules');
+    const docs = DB.get('documents');
+    const bills = DB.get('bills');
+    const now = dayjs();
+    setStats({
+      cases: cases.filter(c=>c.case_stage!=='closed').length,
+      hearings: schedules.filter(s=>s.schedule_type==='hearing'&&dayjs(s.start_time).isAfter(now)).length,
+      docs: docs.length,
+      bills: bills.filter(b=>dayjs(b.generated_at).format('YYYY-MM')===now.format('YYYY-MM')).length,
+    });
+    setRecent({
+      cases: cases.filter(c=>c.case_stage!=='closed').sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||'')).slice(0,5),
+      hearings: schedules.filter(s=>s.schedule_type==='hearing').sort((a,b)=>a.start_time.localeCompare(b.start_time)).slice(0,5),
+    });
+  }, []);
+
+  return (
+    <div>
+      <Title level={4} className="page-title">工作台</Title>
+      <Row gutter={[16,16]} style={{marginBottom:24}}>
+        {[{title:'在办案件',value:stats.cases,icon:<FolderOpenOutlined/>,color:'#1677ff'},
+          {title:'近期开庭',value:stats.hearings,icon:<CalendarOutlined/>,color:'#52c41a'},
+          {title:'文档总数',value:stats.docs,icon:<FileTextOutlined/>,color:'#faad14'},
+          {title:'本月账单',value:stats.bills,icon:<DollarOutlined/>,color:'#f5222d'}].map(s=>(
+          <Col xs={24} sm={12} lg={6} key={s.title}>
+            <Card hoverable className="stat-card">
+              <Statistic title={s.title} value={s.value} prefix={s.icon} valueStyle={{color:s.color}}/>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+      <Row gutter={[16,16]}>
+        <Col xs={24} lg={12}>
+          <Card title="📅 近期开庭" style={{minHeight:300}}>
+            {recent.hearings.length===0?<Empty description="暂无" image={Empty.PRESENTED_IMAGE_SIMPLE}/>:
+              <List dataSource={recent.hearings} renderItem={s=>(
+                <List.Item><List.Item.Meta title={<Text strong>{s.title}</Text>}
+                  description={<span><ClockCircleOutlined/> {dayjs(s.start_time).format('MM-DD HH:mm')} {s.location&&<span>&nbsp;|&nbsp;<EnvironmentOutlined/> {s.location}</span>}</span>}/></List.Item>
+              )}/>}
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title="📂 在办案件" style={{minHeight:300}}>
+            {recent.cases.length===0?<Empty description="暂无" image={Empty.PRESENTED_IMAGE_SIMPLE}/>:
+              <List dataSource={recent.cases} renderItem={c=>(
+                <List.Item><List.Item.Meta title={<Text strong>{c.case_number}</Text>} description={c.case_reason||'未填写'}/>
+                  <Tag color={STAGE_COLORS[c.case_stage]}>{STAGE_LABELS[c.case_stage]}</Tag></List.Item>
+              )}/>}
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
+// ==================== 客户管理 ====================
+function CommunicationPage() {
+  const [clients, setClients] = useState([]);
+  const [search, setSearch] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [form] = Form.useForm();
+  const { user } = useAuth();
+
+  const load = useCallback(() => {
+    let data = DB.get('clients');
+    if (user?.role !== 'admin') data = data.filter(c => c.created_by === user?.username);
+    if (search) data = data.filter(c => c.name.includes(search) || c.contact_person?.includes(search) || c.phone?.includes(search));
+    setClients(data);
+  }, [search, user]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    if (editData) {
+      DB.update('clients', editData.id, values);
+    } else {
+      DB.add('clients', {...values, created_by: user?.username});
+    }
+    message.success(editData?'已更新':'已创建');
+    setModalOpen(false); load();
+  };
+
+  const columns = [
+    { title:'客户名称', dataIndex:'name', width:180 },
+    { title:'联系人', dataIndex:'contact_person', width:100 },
+    { title:'电话', dataIndex:'phone', width:130 },
+    { title:'微信', dataIndex:'wechat', width:120 },
+    { title:'地址', dataIndex:'address', ellipsis:true },
+    { title:'操作', key:'action', width:120, render:(_,r)=>(
+      <Space size="small">
+        <Button type="link" size="small" icon={<EditOutlined/>} onClick={()=>{setEditData(r);form.setFieldsValue(r);setModalOpen(true)}}>编辑</Button>
+        <Popconfirm title="确定删除？" onConfirm={()=>{DB.delete('clients',r.id);load();message.success('已删除')}}>
+          <Button type="link" size="small" danger icon={<DeleteOutlined/>}>删除</Button>
+        </Popconfirm>
+      </Space>
+    )},
+  ];
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+        <Title level={4} style={{margin:0}}>客户管理</Title>
+        <Space>
+          <Input placeholder="搜索..." prefix={<SearchOutlined/>} allowClear value={search} onChange={e=>setSearch(e.target.value)} style={{width:220}}/>
+          <Button icon={<ReloadOutlined/>} onClick={load}>刷新</Button>
+          <Button type="primary" icon={<PlusOutlined/>} onClick={()=>{setEditData(null);form.resetFields();setModalOpen(true)}}>新建客户</Button>
+        </Space>
+      </div>
+      <Card><Table columns={columns} dataSource={clients} rowKey="id" pagination={{pageSize:20}} size="middle"/></Card>
+      <Modal title={editData?'编辑客户':'新建客户'} open={modalOpen} onCancel={()=>setModalOpen(false)} onOk={handleSubmit} width={560}>
+        <Form form={form} layout="vertical" style={{marginTop:12}}>
+          <Form.Item name="name" label="客户名称" rules={[{required:true}]}><Input placeholder="公司/个人名称"/></Form.Item>
+          <Space style={{display:'flex'}}><Form.Item name="contact_person" label="联系人"><Input style={{width:200}}/></Form.Item>
+          <Form.Item name="phone" label="电话"><Input style={{width:200}}/></Form.Item></Space>
+          <Space style={{display:'flex'}}><Form.Item name="wechat" label="微信"><Input style={{width:200}}/></Form.Item>
+          <Form.Item name="email" label="邮箱"><Input style={{width:200}}/></Form.Item></Space>
+          <Form.Item name="address" label="地址"><Input/></Form.Item>
+          <Form.Item name="notes" label="备注"><TextArea rows={2}/></Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== 案件管理 ====================
+function CasesPage() {
+  const [cases, setCases] = useState([]);
+  const [search, setSearch] = useState('');
+  const [stageFilter, setStageFilter] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [form] = Form.useForm();
+  const { user } = useAuth();
+
+  const load = useCallback(() => {
+    let data = DB.get('cases');
+    if (user?.role !== 'admin') data = data.filter(c => c.created_by === user?.username);
+    if (search) data = data.filter(c => (c.case_number||'').includes(search)||(c.case_reason||'').includes(search));
+    if (stageFilter) data = data.filter(c => c.case_stage === stageFilter);
+    setCases(data);
+  }, [search, stageFilter, user]);
+
+  useEffect(()=>{load()},[load]);
+
+  const clients = DB.get('clients');
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    const payload = {...values};
+    ['acceptance_date','filing_date','trial_date','judgment_date','closing_date'].forEach(k=>{
+      payload[k] = payload[k] ? dayjs(payload[k]).format('YYYY-MM-DD HH:mm:ss') : null;
+    });
+    // Parse third_party_tags
+    const tags = payload.third_party_tags || [];
+    const tpIds = []; const tpTexts = [];
+    tags.forEach(v => {
+      if (typeof v === 'string' && v.startsWith('c:')) tpIds.push(parseInt(v.slice(2)));
+      else if (v && typeof v === 'string' && v.trim()) tpTexts.push(v.trim());
+    });
+    payload.third_party_client_ids = tpIds;
+    payload.third_party = tpTexts;
+    delete payload.third_party_tags;
+    if (editData) { DB.update('cases', editData.id, payload); }
+    else { DB.add('cases', {...payload, created_by: user?.username}); }
+    message.success(editData?'已更新':'已创建');
+    setModalOpen(false); load();
+  };
+
+  const columns = [
+    { title:'案号', dataIndex:'case_number', width:160, render:v=><a style={{fontWeight:500}}>{v}</a> },
+    { title:'案由', dataIndex:'case_reason', width:140, ellipsis:true },
+    { title:'阶段', dataIndex:'case_stage', width:90, render:v=><Tag color={STAGE_COLORS[v]}>{STAGE_LABELS[v]}</Tag> },
+    { title:'法院', dataIndex:'court', width:150, ellipsis:true },
+    { title:'标的额', dataIndex:'amount_in_dispute', width:100, align:'right', render:v=>v>0?v.toLocaleString()+'元':'-' },
+    { title:'操作', key:'action', width:120, render:(_,r)=>(
+      <Space size="small">
+        <Button type="link" size="small" icon={<EditOutlined/>} onClick={()=>{
+          setEditData(r);
+          const tags = [...(r.third_party_client_ids||[]).map(id=>'c:'+id),...(r.third_party||[])];
+          form.setFieldsValue({...r,
+            acceptance_date:r.acceptance_date?dayjs(r.acceptance_date):null,
+            filing_date:r.filing_date?dayjs(r.filing_date):null,
+            trial_date:r.trial_date?dayjs(r.trial_date):null,
+            judgment_date:r.judgment_date?dayjs(r.judgment_date):null,
+            closing_date:r.closing_date?dayjs(r.closing_date):null,
+            third_party_tags:tags,
+          });
+          setModalOpen(true);
+        }}>编辑</Button>
+        <Popconfirm title="确定删除？" onConfirm={()=>{DB.delete('cases',r.id);load();message.success('已删除')}}>
+          <Button type="link" size="small" danger icon={<DeleteOutlined/>}>删除</Button>
+        </Popconfirm>
+      </Space>
+    )},
+  ];
+
+  // 文档上传部分
+  const [docs, setDocs] = useState([]);
+  useEffect(()=>{setDocs(DB.get('documents'))},[]);
+
+  const handleUpload = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      DB.add('documents', {
+        original_name: file.name, file_type: file.name.split('.').pop().toLowerCase(),
+        file_size: file.size, size_display: file.size<1024?file.size+'B':file.size<1024*1024?(file.size/1024).toFixed(1)+'KB':(file.size/1024/1024).toFixed(2)+'MB',
+        doc_category:'other', case_id:null, client_id:null, notes:'', version:1, author:user?.real_name||'',
+        content: e.target.result,
+      });
+      message.success(`${file.name} 上传成功`);
+      setDocs(DB.get('documents'));
+    };
+    reader.readAsDataURL(file);
+    return false;
+  };
+
+  const stageOptions = Object.entries(STAGE_LABELS).map(([v,l])=>({value:v,label:l}));
+
+  return (
+    <div>
+      <Title level={4} style={{marginBottom:16}}>案件与文档中心</Title>
+      <Card>
+        <Tabs items={[
+          { key:'cases', label:'案件管理', children:(
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+                <Title level={5} style={{margin:0}}>案件列表</Title>
+                <Space>
+                  <Input placeholder="搜索案号、案由..." prefix={<SearchOutlined/>} allowClear value={search}
+                    onChange={e=>setSearch(e.target.value)} style={{width:200}}/>
+                  <Select placeholder="阶段筛选" allowClear value={stageFilter||undefined} onChange={v=>setStageFilter(v||'')}
+                    style={{width:120}} options={stageOptions}/>
+                  <Button icon={<ReloadOutlined/>} onClick={load}>刷新</Button>
+                  <Button type="primary" icon={<PlusOutlined/>} onClick={()=>{
+                    setEditData(null);form.resetFields();form.setFieldsValue({case_stage:'intake',amount_in_dispute:0,client_ids:[],third_party_tags:[]});setModalOpen(true);
+                  }}>新建案件</Button>
+                </Space>
+              </div>
+              <Table columns={columns} dataSource={cases} rowKey="id" pagination={{pageSize:20}} size="middle" scroll={{x:1000}}/>
+            </div>
+          )},
+          { key:'docs', label:'文件归档', children:(
+            <div>
+              <Card style={{marginBottom:16}}>
+                <Upload.Dragger multiple beforeUpload={handleUpload} showUploadList={false} style={{padding:'16px 0'}}>
+                  <p className="ant-upload-drag-icon"><InboxOutlined style={{fontSize:40,color:'#1677ff'}}/></p>
+                  <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
+                  <p className="ant-upload-hint">文件以 Base64 存储，仅适用于演示</p>
+                </Upload.Dragger>
+              </Card>
+              <Table dataSource={docs} rowKey="id" pagination={{pageSize:20}} size="middle"
+                columns={[
+                  { title:'文件名', dataIndex:'original_name', ellipsis:true },
+                  { title:'类型', dataIndex:'file_type', width:80 },
+                  { title:'大小', dataIndex:'size_display', width:90 },
+                  { title:'操作', key:'action', width:100, render:(_,r)=>(
+                    <Button type="link" size="small" icon={<EyeOutlined/>} onClick={()=>{
+                      const blob = r.content?.startsWith('data:') ? (()=>{const[_,b]=r.content.split(',');const bs=atob(b);const arr=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)arr[i]=bs.charCodeAt(i);return new Blob([arr]);})() : new Blob([r.content||'']);
+                      const url = URL.createObjectURL(blob); window.open(url,'_blank');
+                    }}>预览</Button>
+                  )},
+                ]}/>
+            </div>
+          )},
+        ]}/>
+      </Card>
+
+      {/* 案件编辑弹窗 */}
+      <Modal title={editData?'编辑案件':'新建案件'} open={modalOpen} onCancel={()=>setModalOpen(false)} onOk={handleSubmit} width={760}>
+        <Form form={form} layout="vertical" style={{marginTop:12}}>
+          <Space style={{display:'flex'}} wrap>
+            <Form.Item name="case_number" label="案号" rules={[{required:true}]}><Input placeholder="(2026)京0105民初12345号" style={{width:260}}/></Form.Item>
+            <Form.Item name="case_stage" label="阶段"><Select options={stageOptions} style={{width:120}}/></Form.Item>
+          </Space>
+          <Form.Item name="case_reason" label="案由"><Input placeholder="合同纠纷、劳动争议等"/></Form.Item>
+          <Space style={{display:'flex'}} wrap>
+            <Form.Item name="court" label="法院"><Input placeholder="XX人民法院" style={{width:220}}/></Form.Item>
+            <Form.Item name="judge" label="法官"><Input style={{width:120}}/></Form.Item>
+            <Form.Item name="clerk" label="书记员"><Input style={{width:120}}/></Form.Item>
+          </Space>
+          <Form.Item label="关联客户">
+            <Form.Item name="client_ids" noStyle>
+              <Select mode="multiple" placeholder="选择客户" allowClear style={{maxWidth:500}}
+                options={clients.map(c=>({value:c.id,label:`${c.name}${c.contact_person?' ('+c.contact_person+')':''}`}))}
+                showSearch filterOption={(i,o)=>(o?.label||'').toLowerCase().includes(i.toLowerCase())}/>
+            </Form.Item>
+          </Form.Item>
+          <Space style={{display:'flex'}} wrap>
+            <Form.Item name="plaintiff" label="原告"><Input style={{width:260}}/></Form.Item>
+            <Form.Item name="defendant" label="被告"><Input style={{width:260}}/></Form.Item>
+          </Space>
+          <Space style={{display:'flex'}}>
+            <Form.Item name="amount_in_dispute" label="标的额(元)"><InputNumber style={{width:160}}/></Form.Item>
+          </Space>
+          <Form.Item name="third_party_tags" label="第三人" tooltip="输入搜索客户，搜不到按回车直接添加">
+            <Select mode="tags" placeholder="输入搜索或直接添加..." style={{maxWidth:500}}
+              options={clients.map(c=>({value:'c:'+c.id,label:`${c.name}${c.contact_person?' ('+c.contact_person+')':''}`}))}
+              showSearch filterOption={(i,o)=>(o?.label||'').toLowerCase().includes(i.toLowerCase())}
+              tagRender={p=>{
+                const isClient = typeof p.value==='string' && p.value.startsWith('c:');
+                const cid = isClient ? parseInt(p.value.slice(2)) : null;
+                const cl = cid ? clients.find(c=>c.id===cid) : null;
+                const label = cl ? `${cl.name}${cl.contact_person?' ('+cl.contact_person+')':''}` : String(p.value||p.label);
+                return <Tag color={isClient?'blue':'green'} closable={p.closable} onClose={p.onClose} style={{marginRight:3}}>{isClient?'📋 ':'✏️ '}{label}</Tag>;
+              }}
+            />
+          </Form.Item>
+          <Space style={{display:'flex'}} wrap>
+            {['acceptance_date','filing_date','trial_date','judgment_date','closing_date'].map(k=>(
+              <Form.Item key={k} name={k} label={{acceptance_date:'收案',filing_date:'立案',trial_date:'开庭',judgment_date:'判决',closing_date:'结案'}[k]}>
+                <DatePicker style={{width:140}}/>
+              </Form.Item>
+            ))}
+          </Space>
+          <Form.Item name="notes" label="备注"><TextArea rows={2}/></Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== 文档处理 ====================
+function DocumentsPage() {
+  const [convertFile, setConvertFile] = useState(null);
+  const [targetFormat, setTargetFormat] = useState('pdf');
+  const [exportFile, setExportFile] = useState(null);
+  const [exportMode, setExportMode] = useState('pages');
+  const [dpi, setDpi] = useState(150);
+  const [watermark, setWatermark] = useState('');
+  const docs = DB.get('documents');
+
+  return (
+    <div>
+      <Title level={4} style={{marginBottom:16}}>智能文档处理</Title>
+      <Card>
+        <Tabs items={[
+          { key:'convert', label:'格式转换', children:(
+            <div>
+              <Alert message="支持 PDF ↔ Word 互转" description="上传文件选择转换方向（演示版模拟转换过程）" type="info" showIcon style={{marginBottom:16}}/>
+              <Upload.Dragger maxCount={1} beforeUpload={f=>{setConvertFile(f);return false}} onRemove={()=>setConvertFile(null)} style={{marginBottom:16}}>
+                <p className="ant-upload-drag-icon"><InboxOutlined style={{fontSize:40,color:'#1677ff'}}/></p>
+                <p className="ant-upload-text">点击或拖拽文件</p>
+                <p className="ant-upload-hint">支持 PDF (.pdf) 和 Word (.doc/.docx)</p>
+              </Upload.Dragger>
+              {convertFile && (
+                <Card size="small">
+                  <Space direction="vertical" style={{width:'100%'}}>
+                    <Radio.Group value={targetFormat} onChange={e=>setTargetFormat(e.target.value)}>
+                      <Radio.Button value="pdf"><FileWordOutlined/> Word → PDF</Radio.Button>
+                      <Radio.Button value="docx"><FilePdfOutlined/> PDF → Word</Radio.Button>
+                    </Radio.Group>
+                    <Button type="primary" icon={<SwapOutlined/>} onClick={()=>{
+                      setTimeout(()=>message.success('转换完成！（演示版）'),1000);
+                    }}>开始转换</Button>
+                  </Space>
+                </Card>
+              )}
+            </div>
+          )},
+          { key:'export', label:'图片导出', children:(
+            <div>
+              <Alert message="将文档导出为高清图片" description="支持长图（适合微信分享）或分页图" type="info" showIcon style={{marginBottom:16}}/>
+              <Upload.Dragger maxCount={1} beforeUpload={f=>{setExportFile(f);return false}} onRemove={()=>setExportFile(null)} style={{marginBottom:16}}>
+                <p className="ant-upload-drag-icon"><InboxOutlined style={{fontSize:40,color:'#1677ff'}}/></p>
+                <p className="ant-upload-text">点击或拖拽文件</p>
+              </Upload.Dragger>
+              {exportFile && (
+                <Card size="small">
+                  <Space direction="vertical" style={{width:'100%'}}>
+                    <Radio.Group value={exportMode} onChange={e=>setExportMode(e.target.value)}>
+                      <Radio.Button value="long"><PictureOutlined/> 连续长图</Radio.Button>
+                      <Radio.Button value="pages"><PictureOutlined/> 分页图片</Radio.Button>
+                    </Radio.Group>
+                    <div>清晰度(DPI): <Slider min={72} max={300} value={dpi} onChange={setDpi} style={{width:300}}/></div>
+                    <div>水印: <Input placeholder="律所名称" value={watermark} onChange={e=>setWatermark(e.target.value)} style={{width:300}}/></div>
+                    <Button type="primary" icon={<PictureOutlined/>} onClick={()=>{setTimeout(()=>message.success('导出完成！（演示版）'),1000)}}>开始导出</Button>
+                  </Space>
+                </Card>
+              )}
+            </div>
+          )},
+          { key:'preview', label:'文件预览', children:(
+            <div>
+              <Alert message="点击文件名旁预览按钮查看" type="info" showIcon style={{marginBottom:16}}/>
+              <Table dataSource={docs} rowKey="id" pagination={{pageSize:20}} size="middle"
+                columns={[
+                  { title:'文件名', dataIndex:'original_name', ellipsis:true },
+                  { title:'类型', dataIndex:'file_type', width:80 },
+                  { title:'大小', dataIndex:'size_display', width:90 },
+                  { title:'操作', key:'action', width:100, render:(_,r)=>(
+                    <Button type="link" icon={<EyeOutlined/>} onClick={()=>{
+                      if(r.content?.startsWith('data:')){
+                        const [mime, b64] = r.content.split(',');
+                        const bs = atob(b64);const arr=new Uint8Array(bs.length);
+                        for(let i=0;i<bs.length;i++)arr[i]=bs.charCodeAt(i);
+                        const blob = new Blob([arr],{type:mime.split(':')[1]?.split(';')[0]||'application/octet-stream'});
+                        window.open(URL.createObjectURL(blob),'_blank');
+                      }
+                    }}>预览</Button>
+                  )},
+                ]}/>
+            </div>
+          )},
+        ]}/>
+      </Card>
+    </div>
+  );
+}
+
+// ==================== 日程管理 ====================
+function SchedulePage() {
+  const [schedules, setSchedules] = useState([]);
+  const [view, setView] = useState('month');
+  const [curDate, setCurDate] = useState(dayjs());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [form] = Form.useForm();
+  const [smsText, setSmsText] = useState('');
+  const [smsResult, setSmsResult] = useState(null);
+
+  const load = useCallback(() => { setSchedules(DB.get('schedules')); }, []);
+
+  useEffect(()=>{load()},[load]);
+
+  const getDaySchedules = (d) => schedules.filter(s=>dayjs(s.start_time).format('YYYY-MM-DD')===d.format('YYYY-MM-DD'));
+  const getConflicts = () => {
+    const ids = new Set();
+    for(let i=0;i<schedules.length;i++)for(let j=i+1;j<schedules.length;j++){
+      if(dayjs(schedules[i].start_time)<dayjs(schedules[j].end_time)&&dayjs(schedules[i].end_time)>dayjs(schedules[j].start_time)){
+        ids.add(schedules[i].id);ids.add(schedules[j].id);
+      }
+    }
+    return ids;
+  };
+  const conflictIds = getConflicts();
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    const payload = {...values, start_time:values.time_range[0].toISOString(), end_time:values.time_range[1].toISOString()};
+    delete payload.time_range;delete payload.date;
+    if (editData) { DB.update('schedules', editData.id, payload); }
+    else { DB.add('schedules', payload); }
+    message.success(editData?'已更新':'已创建');
+    setModalOpen(false); load();
+  };
+
+  const cases = DB.get('cases');
+
+  // 月视图渲染
+  const renderMonth = () => {
+    const firstDay = curDate.startOf('month');
+    const startDay = firstDay.day(); // 0=Sun
+    let day = firstDay.subtract(startDay, 'day');
+    const weeks = [];
+    for (let w=0;w<6;w++) {
+      const week = [];
+      for (let d=0;d<7;d++) { week.push(day); day = day.add(1,'day'); }
+      weeks.push(week);
+      if (day.isAfter(curDate.endOf('month'),'day')) break;
+    }
+    const today = dayjs().format('YYYY-MM-DD');
+    return (
+      <div style={{border:'1px solid #f0f0f0',borderRadius:8,overflow:'hidden'}}>
+        <div style={{display:'flex',background:'#fafafa',borderBottom:'1px solid #f0f0f0'}}>
+          {['日','一','二','三','四','五','六'].map(w=><div key={w} style={{flex:1,textAlign:'center',padding:'8px 0',fontSize:13,fontWeight:600,color:'#666'}}>{w}</div>)}
+        </div>
+        {weeks.map((week,wi)=>(
+          <div key={wi} style={{display:'flex'}}>
+            {week.map((d,di)=>{
+              const isCurrent = d.month()===curDate.month();
+              const isToday = d.format('YYYY-MM-DD')===today;
+              const ds = getDaySchedules(d);
+              return (
+                <div key={di} className={`calendar-cell ${isToday?'today':''} ${!isCurrent?'other-month':''}`}
+                  onClick={()=>{form.resetFields();setEditData(null);
+                    form.setFieldsValue({schedule_type:'hearing',time_range:[d.hour(9).minute(0),d.hour(12).minute(0)]});
+                    setModalOpen(true);}}>
+                  <div className={`calendar-date ${isToday?'today':''}`}>{d.format('D')}</div>
+                  {ds.slice(0,3).map(s=><div key={s.id} className={`schedule-dot ${conflictIds.has(s.id)?'conflict':'normal'}`}
+                    onClick={e=>{e.stopPropagation();setEditData(s);form.setFieldsValue({...s,time_range:[dayjs(s.start_time),dayjs(s.end_time)]});setModalOpen(true);}}>{s.title}</div>)}
+                  {ds.length>3&&<div style={{fontSize:10,color:'#999'}}>+{ds.length-3}</div>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // 短信解析
+  const parseSms = () => {
+    if (!smsText.trim()) { message.warning('请输入短信内容'); return; }
+    const text = smsText.trim();
+    // 简单正则提取（演示版）
+    const result = { case_number:'', hearing_datetime:'', location:'', judge:'', phone:'', method:'regex' };
+    const cnMatch = text.match(/[\(（]?\s*(\d{4}[\)）]?\s*\S{3,30}号)/);
+    if (cnMatch) result.case_number = cnMatch[1].replace(/^[,，。.\s]+|[,，。.\s]+$/g,'');
+    const dtMatch = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:上午|下午|晚上)?\s*(\d{1,2})[时:：](\d{1,2})/);
+    if (dtMatch) {
+      try {
+        const dt = dayjs(`${dtMatch[1]}-${dtMatch[2].padStart(2,'0')}-${dtMatch[3].padStart(2,'0')}T${dtMatch[4].padStart(2,'0')}:${dtMatch[5].padStart(2,'0')}:00`);
+        if (dt.isValid()) result.hearing_datetime = dt.format('YYYY-MM-DDTHH:mm:ss');
+      } catch(e){}
+    }
+    const locMatch = text.match(/((?:本院|法庭|法院|审判庭|第\d+法庭|第\d+审判庭)[^\s，。,.]*)/);
+    if (locMatch) result.location = locMatch[1];
+    const judgeMatch = text.match(/(?:承办法官|审判长|法官)[：:：]?\s*([^\s，。,，。\d]{2,4})/);
+    if (judgeMatch) result.judge = judgeMatch[1];
+    const phoneMatch = text.match(/(?:联系电话|电话|联系方式)[：:：]?\s*(\d{7,15})/);
+    if (phoneMatch) result.phone = phoneMatch[1];
+    if (!result.case_number && !result.hearing_datetime) { message.warning('未能识别庭审信息'); return; }
+    setSmsResult(result);
+    message.success('解析完成');
+  };
+
+  return (
+    <div>
+      <Title level={4} style={{marginBottom:16}}>日程与庭审中心</Title>
+      <Card>
+        <Tabs items={[
+          { key:'calendar', label:'日历视图', children:(
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <Space>
+                  <Title level={5} style={{margin:0}}>日历</Title>
+                  <Segmented value={view} onChange={setView} options={[{value:'month',label:'月'},{value:'week',label:'周'}]}/>
+                  <Button onClick={()=>setCurDate(dayjs())}>今天</Button>
+                  <Button onClick={()=>setCurDate(curDate.subtract(1,view==='month'?'month':'week'))}>{'<'}</Button>
+                  <Button onClick={()=>setCurDate(curDate.add(1,view==='month'?'month':'week'))}>{'>'}</Button>
+                  <Text type="secondary">{curDate.format('YYYY年M月')}</Text>
+                </Space>
+                <Button type="primary" icon={<PlusOutlined/>} onClick={()=>{setEditData(null);form.resetFields();
+                  form.setFieldsValue({schedule_type:'hearing',time_range:[dayjs().hour(9).minute(0),dayjs().hour(12).minute(0)]});setModalOpen(true);}}>新建日程</Button>
+              </div>
+              {conflictIds.size>0&&<Alert type="error" message={`${schedules.filter(s=>conflictIds.has(s.id)).length}个日程存在时间冲突`} showIcon closable style={{marginBottom:16}}/>}
+              {renderMonth()}
+              <div style={{marginTop:16}}><Title level={5}>日程列表 ({schedules.length})</Title>
+                {schedules.length===0?<Empty description="暂无"/>:schedules.map(s=>(
+                  <Card key={s.id} size="small" hoverable style={{marginBottom:6}} onClick={()=>{setEditData(s);form.setFieldsValue({...s,time_range:[dayjs(s.start_time),dayjs(s.end_time)]});setModalOpen(true);}}>
+                    <div style={{display:'flex',justifyContent:'space-between'}}>
+                      <Space><Tag color={TYPE_COLORS[s.schedule_type]}>{SCHEDULE_TYPE_LABELS[s.schedule_type]}</Tag>
+                        <Text strong style={{color:conflictIds.has(s.id)?'#ff4d4f':'#333'}}>{s.title}</Text>
+                        {conflictIds.has(s.id)&&<Tag color="error">冲突</Tag>}</Space>
+                      <Text type="secondary">{dayjs(s.start_time).format('MM-DD HH:mm')}~{dayjs(s.end_time).format('HH:mm')}{s.location?' | '+s.location:''}</Text>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )},
+          { key:'sms', label:'短信解析', children:(
+            <div>
+              <Alert message="粘贴12368法院短信，自动提取开庭信息" type="info" showIcon style={{marginBottom:16}}/>
+              <Card title="短信内容" style={{marginBottom:16}}>
+                <TextArea rows={6} value={smsText} onChange={e=>{setSmsText(e.target.value);setSmsResult(null)}}
+                  placeholder="【12368法院服务平台】XX人民法院通知：关于(2026)京0105民初12345号案件，定于2026年9月15日09时30分在本院第3审判庭开庭审理，承办法官张三，联系电话010-12345678。"/>
+                <Button type="primary" icon={<ThunderboltOutlined/>} onClick={parseSms} style={{marginTop:12}}>解析短信</Button>
+              </Card>
+              {smsResult && (smsResult.case_number||smsResult.hearing_datetime) && (
+                <Card title="解析结果">
+                  <Descriptions column={2} size="small" bordered>
+                    <Descriptions.Item label="案号"><Text strong>{smsResult.case_number||'未识别'}</Text></Descriptions.Item>
+                    <Descriptions.Item label="开庭时间"><Text strong>{smsResult.hearing_datetime?dayjs(smsResult.hearing_datetime).format('YYYY年M月D日 HH:mm'):'未识别'}</Text></Descriptions.Item>
+                    <Descriptions.Item label="地点">{smsResult.location||'未识别'}</Descriptions.Item>
+                    <Descriptions.Item label="法官">{smsResult.judge||'未识别'}</Descriptions.Item>
+                  </Descriptions>
+                  <Divider/>
+                  <Button type="primary" icon={<PlusOutlined/>} disabled={!smsResult.hearing_datetime} onClick={()=>{
+                    DB.add('schedules',{title:`开庭-${smsResult.case_number||''}`,schedule_type:'hearing',case_id:null,start_time:smsResult.hearing_datetime,end_time:dayjs(smsResult.hearing_datetime).add(3,'hour').toISOString(),location:smsResult.location||'',judge:smsResult.judge||'',notes:'来源：12368短信',is_parsed_from_sms:true,created_at:dayjs().format('YYYY-MM-DD HH:mm:ss')});
+                    message.success('已创建开庭日程');load();
+                  }}>一键创建开庭日程</Button>
+                </Card>
+              )}
+            </div>
+          )},
+        ]}/>
+      </Card>
+      {/* 日程弹窗 */}
+      <Modal title={editData?'编辑日程':'新建日程'} open={modalOpen} onCancel={()=>setModalOpen(false)} onOk={handleSubmit} width={520}>
+        <Form form={form} layout="vertical" style={{marginTop:8}}>
+          <Form.Item name="title" label="标题" rules={[{required:true}]}><Input/></Form.Item>
+          <Space style={{display:'flex'}}>
+            <Form.Item name="schedule_type" label="类型"><Select style={{width:120}} options={Object.entries(SCHEDULE_TYPE_LABELS).map(([v,l])=>({value:v,label:l}))}/></Form.Item>
+            <Form.Item name="case_id" label="关联案件"><Select allowClear placeholder="可选" style={{width:200}} options={cases.map(c=>({value:c.id,label:c.case_number}))}/></Form.Item>
+          </Space>
+          <Form.Item name="time_range" label="时间范围" rules={[{required:true}]}>
+            <DatePicker.RangePicker showTime={{format:'HH:mm'}} format="YYYY-MM-DD HH:mm" style={{width:'100%'}}/>
+          </Form.Item>
+          <Space style={{display:'flex'}}><Form.Item name="location" label="地点"><Input style={{width:220}}/></Form.Item>
+          <Form.Item name="judge" label="法官"><Input style={{width:140}}/></Form.Item></Space>
+          <Form.Item name="notes" label="备注"><TextArea rows={2}/></Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== 财务管理 ====================
+function BillingPage() {
+  const [records, setRecords] = useState([]);
+  const [bills, setBills] = useState([]);
+  const [configs, setConfigs] = useState([]);
+  const [activeTimer, setActiveTimer] = useState(null);
+  const [timerModalOpen, setTimerModalOpen] = useState(false);
+  const [timerForm] = Form.useForm();
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [editConfig, setEditConfig] = useState(null);
+  const [configForm] = Form.useForm();
+  const [genModalOpen, setGenModalOpen] = useState(false);
+  const [genForm] = Form.useForm();
+  const [selectedBill, setSelectedBill] = useState(null);
+  const timerRef = useRef(null);
+  const cases = DB.get('cases');
+
+  const load = useCallback(() => {
+    setRecords(DB.get('time_records'));
+    setBills(DB.get('bills'));
+    setConfigs(DB.get('billing_config'));
+  }, []);
+
+  useEffect(()=>{load()},[load]);
+
+  // 计时器刷新
+  useEffect(()=>{
+    const ar = DB.get('time_records').find(r=>r.duration_minutes===0&&r.start_time);
+    if (ar) {
+      setActiveTimer({record:ar,elapsed:Math.floor((Date.now()-new Date(ar.start_time).getTime())/60000)});
+      timerRef.current = setInterval(()=>{
+        setActiveTimer(prev=>prev?{...prev,elapsed:Math.floor((Date.now()-new Date(prev.record.start_time).getTime())/60000)}:null);
+      },10000);
+    }
+    return ()=>clearInterval(timerRef.current);
+  },[]);
+
+  const startTimer = async () => {
+    const values = await timerForm.validateFields();
+    const rec = DB.add('time_records', {
+      case_id:values.case_id||null,work_category:values.work_category||'other',description:values.description||'',
+      start_time:new Date().toISOString(),end_time:new Date().toISOString(),duration_minutes:0,is_billed:false,
+    });
+    setActiveTimer({record:rec,elapsed:0});setTimerModalOpen(false);load();
+  };
+
+  const stopTimer = () => {
+    if (!activeTimer?.record?.id) return;
+    const mins = Math.max(1,Math.floor((Date.now()-new Date(activeTimer.record.start_time).getTime())/60000));
+    DB.update('time_records', activeTimer.record.id, {end_time:new Date().toISOString(),duration_minutes:mins});
+    message.success(`计时结束，${formatDuration(mins)}`);
+    setActiveTimer(null);load();
+  };
+
+  const addManual = async () => {
+    const values = await timerForm.validateFields();
+    const [s,e] = values.time_range;
+    const mins = Math.max(1,Math.floor((e.toDate()-s.toDate())/60000));
+    DB.add('time_records', {
+      case_id:values.case_id||null,work_category:values.work_category||'other',description:values.description||'',
+      start_time:s.toISOString(),end_time:e.toISOString(),duration_minutes:mins,is_billed:false,
+    });
+    message.success('已添加');setTimerModalOpen(false);load();
+  };
+
+  const handleGenerate = async () => {
+    const values = await genForm.validateFields();
+    const [ps,pe] = values.period;
+    const clientId = values.client_id;
+    const client = DB.get('clients').find(c=>c.id===clientId);
+    const caseIds = DB.get('cases').filter(c=>DB.get('clients').find(cl=>cl.id===clientId)).map(c=>c.id);
+    const unbilled = DB.get('time_records').filter(r=>!r.is_billed&&caseIds.includes(r.case_id)&&dayjs(r.start_time).isAfter(ps)&&dayjs(r.end_time).isBefore(pe));
+    if (unbilled.length===0) { message.error('该期间没有未计费工时'); return; }
+
+    const config = DB.get('billing_config').find(c=>c.is_default) || {billing_method:'hourly',unit_price:2000};
+    const items = [];
+    const groups = {};
+    unbilled.forEach(r=>{const k=`${r.case_id}_${r.work_category}`; if(!groups[k])groups[k]=[];groups[k].push(r);});
+    Object.values(groups).forEach(group=>{
+      const totalMin = group.reduce((s,r)=>s+r.duration_minutes,0);
+      const amt = config.billing_method==='fixed'?config.unit_price:config.billing_method==='percentage'?(DB.get('cases').find(c=>c.id===group[0].case_id)?.amount_in_dispute||0)*config.unit_price/100:Math.round(totalMin/60*config.unit_price*100)/100;
+      items.push({case_id:group[0].case_id,description:`${WORK_LABELS[group[0].work_category]}`,billing_method:config.billing_method,unit_price:config.unit_price,quantity:+(totalMin/60).toFixed(1),amount:amt,time_record_ids:group.map(r=>r.id)});
+    });
+
+    const bill = DB.add('bills', {
+      bill_number:`BILL-${dayjs().format('YYYYMMDD')}-${Math.random().toString(36).slice(2,6).toUpperCase()}`,
+      client_id:clientId,billing_period_start:ps.toISOString(),billing_period_end:pe.toISOString(),
+      total_amount:items.reduce((s,i)=>s+i.amount,0),status:'generated',notes:values.notes||'',
+      generated_at:dayjs().format('YYYY-MM-DD HH:mm:ss'),exported_at:null,items:items,
+    });
+    items.forEach(it=>it.time_record_ids.forEach(rid=>DB.update('time_records',rid,{is_billed:true})));
+    message.success(`账单 ${bill.bill_number} 已生成`);
+    setGenModalOpen(false);load();
+  };
+
+  return (
+    <div>
+      <Title level={4} style={{marginBottom:16}}>财务账单管理</Title>
+      <Card>
+        <Tabs items={[
+          { key:'time', label:'工时记录', children:(
+            <div>
+              <Card style={{marginBottom:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <Space><Title level={5} style={{margin:0}}>⌛ 计时器</Title>
+                    {activeTimer?<Space><Tag color="processing">计时中</Tag><Text>已过 {formatDuration(activeTimer.elapsed)}</Text></Space>:<Text type="secondary">点击开始</Text>}</Space>
+                  {activeTimer?<Button type="primary" danger icon={<PauseCircleOutlined/>} onClick={stopTimer} size="large">停止计时</Button>:
+                    <Space>
+                      <Button type="primary" icon={<PlayCircleOutlined/>} onClick={()=>{timerForm.resetFields();setTimerModalOpen(true)}} size="large">开始计时</Button>
+                      <Button icon={<PlusOutlined/>} onClick={()=>{timerForm.resetFields();setTimerModalOpen(true)}}>手动补录</Button>
+                    </Space>}
+                </div>
+              </Card>
+              <Table dataSource={records} rowKey="id" size="middle" pagination={{pageSize:20}}
+                columns={[
+                  { title:'分类', dataIndex:'work_category', width:90, render:v=><Tag>{WORK_LABELS[v]}</Tag> },
+                  { title:'描述', dataIndex:'description', ellipsis:true },
+                  { title:'开始', dataIndex:'start_time', width:120, render:v=>v?dayjs(v).format('MM-DD HH:mm'):'-' },
+                  { title:'时长', dataIndex:'duration_minutes', width:90, render:v=>v>0?formatDuration(v):<Tag color="processing">计时中</Tag> },
+                  { title:'状态', dataIndex:'is_billed', width:70, render:v=>v?<Tag color="green">已计费</Tag>:<Tag>未计费</Tag> },
+                  { title:'操作', key:'action', width:80, render:(_,r)=>(
+                    <Popconfirm title="确定删除？" onConfirm={()=>{DB.delete('time_records',r.id);load()}} disabled={r.is_billed}>
+                      <Button type="link" size="small" danger disabled={r.is_billed}>删除</Button></Popconfirm>
+                  )},
+                ]}/>
+            </div>
+          )},
+          { key:'config', label:'计费配置', children:(
+            <div>
+              <Alert message="默认配置应用于所有案件，可在案件编辑中覆盖" type="info" showIcon style={{marginBottom:16}}/>
+              <Button type="primary" icon={<PlusOutlined/>} style={{marginBottom:16}} onClick={()=>{setEditConfig(null);configForm.resetFields();configForm.setFieldsValue({billing_method:'hourly',unit_price:2000,is_default:false});setConfigModalOpen(true)}}>新增配置</Button>
+              <Table dataSource={configs} rowKey="id" pagination={false} size="middle"
+                columns={[
+                  { title:'名称', dataIndex:'name' },
+                  { title:'方式', dataIndex:'billing_method', width:80, render:v=><Tag>{METHOD_LABELS[v]}</Tag> },
+                  { title:'费率', dataIndex:'unit_price', width:120, render:(v,r)=>r.billing_method==='percentage'?v+'%':r.billing_method==='fixed'?v.toLocaleString()+'元/件':v.toLocaleString()+'元/小时' },
+                  { title:'默认', dataIndex:'is_default', width:70, render:v=>v?<Tag color="green">默认</Tag>:'' },
+                  { title:'操作', key:'action', width:120, render:(_,r)=>(
+                    <Space><Button type="link" size="small" onClick={()=>{setEditConfig(r);configForm.setFieldsValue(r);setConfigModalOpen(true)}}>编辑</Button>
+                      <Button type="link" size="small" danger onClick={()=>{DB.delete('billing_config',r.id);load()}}>删除</Button></Space>
+                  )},
+                ]}/>
+            </div>
+          )},
+          { key:'bills', label:'账单管理', children:(
+            <div>
+              <div style={{marginBottom:16,display:'flex',gap:8}}>
+                <Alert message="从工时记录自动生成账单" type="info" showIcon style={{flex:1}}/>
+                <Button type="primary" icon={<FileTextOutlined/>} size="large" onClick={()=>{genForm.resetFields();setGenModalOpen(true)}}>生成账单</Button>
+              </div>
+              <Table dataSource={bills} rowKey="id" size="middle" pagination={{pageSize:20}}
+                columns={[
+                  { title:'编号', dataIndex:'bill_number', width:180, render:v=><a onClick={()=>{const b=bills.find(x=>x.bill_number===v);if(b)setSelectedBill(b)}}>{v}</a> },
+                  { title:'金额', dataIndex:'total_amount', width:120, align:'right', render:v=>v.toLocaleString()+'元' },
+                  { title:'状态', dataIndex:'status', width:80, render:v=><Tag color={STATUS_COLORS[v]}>{STATUS_LABELS[v]}</Tag> },
+                  { title:'生成时间', dataIndex:'generated_at', width:120, render:v=>v?dayjs(v).format('YYYY-MM-DD'):'-' },
+                  { title:'操作', key:'action', width:100, render:(_,r)=>(
+                    <Space>
+                      {r.status!=='paid'&&<Button type="link" size="small" onClick={()=>{DB.update('bills',r.id,{status:'paid',exported_at:dayjs().format('YYYY-MM-DD HH:mm:ss')});load()}}>收款</Button>}
+                      <Button type="link" size="small" danger onClick={()=>{(r.items||[]).forEach(i=>(i.time_record_ids||[]).forEach(rid=>DB.update('time_records',rid,{is_billed:false})));DB.delete('bills',r.id);load()}}>删除</Button>
+                    </Space>
+                  )},
+                ]}/>
+            </div>
+          )},
+        ]}/>
+      </Card>
+
+      {/* 计时弹窗 */}
+      <Modal title={activeTimer?'开始计时':'添加工时记录'} open={timerModalOpen} onCancel={()=>setTimerModalOpen(false)}
+        onOk={activeTimer?undefined:addManual} footer={activeTimer?[<Button key="c" onClick={()=>setTimerModalOpen(false)}>取消</Button>,<Button key="s" type="primary" icon={<PlayCircleOutlined/>} onClick={startTimer}>开始计时</Button>]:undefined} width={520}>
+        <Form form={timerForm} layout="vertical" style={{marginTop:8}}>
+          <Form.Item name="case_id" label="关联案件"><Select allowClear placeholder="可选" options={cases.map(c=>({value:c.id,label:c.case_number}))}/></Form.Item>
+          <Form.Item name="work_category" label="工作分类" initialValue="other"><Select style={{width:160}} options={Object.entries(WORK_LABELS).map(([v,l])=>({value:v,label:l}))}/></Form.Item>
+          {!activeTimer&&<Form.Item name="time_range" label="时间范围" rules={[{required:true}]}><DatePicker.RangePicker showTime={{format:'HH:mm'}} format="YYYY-MM-DD HH:mm" style={{width:'100%'}}/></Form.Item>}
+          <Form.Item name="description" label="工作描述"><TextArea rows={2} placeholder="简述工作内容"/></Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 计费配置弹窗 */}
+      <Modal title={editConfig?'编辑配置':'新增配置'} open={configModalOpen} onCancel={()=>setConfigModalOpen(false)}
+        onOk={async()=>{const v=await configForm.validateFields();if(editConfig)DB.update('billing_config',editConfig.id,v);else{if(v.is_default)DB.get('billing_config').forEach(c=>DB.update('billing_config',c.id,{is_default:false}));DB.add('billing_config',v);}message.success(editConfig?'已更新':'已创建');setConfigModalOpen(false);load();}} width={460}>
+        <Form form={configForm} layout="vertical" style={{marginTop:8}}>
+          <Form.Item name="name" label="名称" rules={[{required:true}]}><Input/></Form.Item>
+          <Form.Item name="billing_method" label="计费方式"><Radio.Group><Radio.Button value="hourly">按小时</Radio.Button><Radio.Button value="fixed">按件</Radio.Button><Radio.Button value="percentage">按比例</Radio.Button></Radio.Group></Form.Item>
+          <Form.Item name="unit_price" label="费率" rules={[{required:true}]}><InputNumber min={0} step={100} style={{width:200}}/></Form.Item>
+          <Form.Item name="is_default" label="设为默认" valuePropName="checked"><Select options={[{value:true,label:'是'},{value:false,label:'否'}]}/></Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 生成账单弹窗 */}
+      <Modal title="生成账单" open={genModalOpen} onCancel={()=>setGenModalOpen(false)} onOk={handleGenerate} width={560}>
+        <Form form={genForm} layout="vertical" style={{marginTop:8}}>
+          <Form.Item name="client_id" label="选择客户" rules={[{required:true}]}>
+            <Select placeholder="选择客户" options={DB.get('clients').map(c=>({value:c.id,label:c.name}))}/>
+          </Form.Item>
+          <Form.Item name="period" label="计费期间" rules={[{required:true}]}><DatePicker.RangePicker style={{width:'100%'}}/></Form.Item>
+          <Divider>律所信息</Divider>
+          <Form.Item name="firm_name" label="律所名称"><Input/></Form.Item>
+          <Form.Item name="lawyer_name" label="律师姓名"><Input/></Form.Item>
+          <Form.Item name="notes" label="备注"><TextArea rows={2}/></Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 账单详情弹窗 */}
+      <Modal title={`账单详情 - ${selectedBill?.bill_number||''}`} open={!!selectedBill} onCancel={()=>setSelectedBill(null)} width={700} footer={null}>
+        {selectedBill&&<>
+          <Descriptions column={3} size="small" bordered>
+            <Descriptions.Item label="金额"><Text strong>{selectedBill.total_amount.toLocaleString()}元</Text></Descriptions.Item>
+            <Descriptions.Item label="状态"><Tag color={STATUS_COLORS[selectedBill.status]}>{STATUS_LABELS[selectedBill.status]}</Tag></Descriptions.Item>
+          </Descriptions>
+          <Divider>明细</Divider>
+          <Table dataSource={selectedBill.items||[]} rowKey="id" pagination={false} size="small"
+            columns={[
+              { title:'描述', dataIndex:'description' },{ title:'方式', dataIndex:'billing_method',width:70,render:v=>METHOD_LABELS[v] },
+              { title:'数量', dataIndex:'quantity',width:80,align:'right' },{ title:'单价', dataIndex:'unit_price',width:100,align:'right',render:v=>v.toLocaleString() },
+              { title:'金额', dataIndex:'amount',width:120,align:'right',render:v=><Text strong>{v.toLocaleString()}元</Text> },
+            ]}/>
+          <div style={{textAlign:'right',marginTop:16}}><Text strong style={{fontSize:16}}>合计：¥ {selectedBill.total_amount.toLocaleString()}</Text></div>
+        </>}
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== 系统管理 ====================
+function SystemPage() {
+  const [users, setUsers] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [form] = Form.useForm();
+  const { user: me } = useAuth();
+  const isAdmin = me?.role === 'admin';
+
+  const load = () => { setUsers(DB.get('users')); };
+  useEffect(()=>{load()},[]);
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    if (editUser) {
+      const upd = {...values};
+      if (!upd.password) delete upd.password;
+      DB.update('users', editUser.id, upd);
+    } else {
+      DB.add('users', {...values, is_active:true});
+    }
+    message.success(editUser?'已更新':'已创建');
+    setModalOpen(false); load();
+  };
+
+  const toggleActive = (u) => {
+    if (!isAdmin) return;
+    DB.update('users', u.id, {is_active:!u.is_active});
+    message.success(`${u.real_name} 已${u.is_active?'停用':'启用'}`);
+    load();
+  };
+
+  const handleDelete = (u) => {
+    if (!isAdmin||u.id===me?.id) return;
+    DB.delete('users', u.id); load(); message.success('已删除');
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+        <Title level={4} style={{margin:0}}><SettingOutlined/> 系统管理</Title>
+        <Button type="primary" icon={<PlusOutlined/>} onClick={()=>{setEditUser(null);form.resetFields();form.setFieldsValue({role:'lawyer'});setModalOpen(true)}} disabled={!isAdmin}>添加成员</Button>
+      </div>
+      <Alert message={`当前: ${me?.real_name} (${ROLE_LABELS[me?.role]}) ${isAdmin?'— 管理员':''}`} type={isAdmin?'success':'info'} showIcon style={{marginBottom:16}}/>
+      <Card title={`团队成员 (${users.length}人)`}>
+        {!isAdmin&&<Alert message="仅管理员可管理成员" type="warning" showIcon style={{marginBottom:16}}/>}
+        <Table dataSource={users} rowKey="id" size="middle" pagination={false}
+          columns={[
+            { title:'用户名', dataIndex:'username', width:100 },
+            { title:'姓名', dataIndex:'real_name', width:90 },
+            { title:'角色', dataIndex:'role', width:80, render:v=><Tag color={ROLE_COLORS[v]}>{ROLE_LABELS[v]}</Tag> },
+            { title:'电话', dataIndex:'phone', width:120, render:v=>v||'-' },
+            { title:'状态', dataIndex:'is_active', width:70, render:(v,u)=>isAdmin?<Switch checked={v} size="small" onChange={()=>toggleActive(u)} checkedChildren={<CheckCircleOutlined/>} unCheckedChildren={<StopOutlined/>}/>:<Tag color={v?'green':'red'}>{v?'正常':'已停用'}</Tag> },
+            { title:'操作', key:'action', width:100, render:(_,u)=>(<Space>
+              <Button type="link" size="small" icon={<EditOutlined/>} disabled={!isAdmin} onClick={()=>{setEditUser(u);form.setFieldsValue({real_name:u.real_name,role:u.role,phone:u.phone||'',email:u.email||''});setModalOpen(true)}}>编辑</Button>
+              <Popconfirm title="确定删除?" onConfirm={()=>handleDelete(u)}><Button type="link" size="small" danger disabled={!isAdmin||u.id===me?.id}>删除</Button></Popconfirm>
+            </Space>)},
+          ]}/>
+        <div style={{marginTop:16,background:'#fafafa',padding:16,borderRadius:8}}>
+          <Text strong>角色权限：</Text>
+          <Descriptions column={3} size="small" style={{marginTop:8}}>
+            <Descriptions.Item label={<Tag color="red">管理员</Tag>}>全部数据+管理成员</Descriptions.Item>
+            <Descriptions.Item label={<Tag color="blue">律师</Tag>}>自己的案件和客户</Descriptions.Item>
+            <Descriptions.Item label={<Tag color="green">助理</Tag>}>被分配的案件</Descriptions.Item>
+          </Descriptions>
+        </div>
+      </Card>
+      <Modal title={editUser?'编辑成员':'添加成员'} open={modalOpen} onCancel={()=>setModalOpen(false)} onOk={handleSubmit} width={460}>
+        <Form form={form} layout="vertical" style={{marginTop:8}}>
+          {!editUser&&<><Form.Item name="username" label="用户名" rules={[{required:true}]}><Input/></Form.Item>
+          <Form.Item name="password" label="密码" rules={[{required:true}]}><Input.Password/></Form.Item></>}
+          <Form.Item name="real_name" label="姓名" rules={[{required:true}]}><Input/></Form.Item>
+          <Form.Item name="role" label="角色" rules={[{required:true}]}><Select options={Object.entries(ROLE_LABELS).map(([v,l])=>({value:v,label:l}))}/></Form.Item>
+          <Space style={{display:'flex'}}><Form.Item name="phone" label="电话"><Input style={{width:180}}/></Form.Item>
+          <Form.Item name="email" label="邮箱"><Input style={{width:200}}/></Form.Item></Space>
+          {editUser&&<Form.Item name="password" label="新密码(留空不变)"><Input.Password/></Form.Item>}
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== App 根组件 ====================
+function App() {
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('lawyer_center_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [page, setPage] = useState('dashboard');
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const login = (u) => {
+    const {password, ...safe} = u;
+    setUser(safe);
+    localStorage.setItem('lawyer_center_user', JSON.stringify(safe));
+    setPage('dashboard');
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('lawyer_center_user');
+  };
+
+  if (!user) return <>{contextHolder}<LoginPage/></>;
+
+  const pages = {
+    dashboard: <DashboardPage/>,
+    communication: <CommunicationPage/>,
+    cases: <CasesPage/>,
+    documents: <DocumentsPage/>,
+    schedule: <SchedulePage/>,
+    billing: <BillingPage/>,
+    system: <SystemPage/>,
+  };
+
+  return (
+    <AuthContext.Provider value={{user,login,logout}}>
+      {contextHolder}
+      <MainLayout currentPage={page} onNavigate={setPage}>
+        {pages[page] || <DashboardPage/>}
+      </MainLayout>
+    </AuthContext.Provider>
+  );
+}
+
+render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
