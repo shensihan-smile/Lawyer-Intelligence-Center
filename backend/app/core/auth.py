@@ -35,11 +35,31 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
+def _get_or_create_guest(db: Session) -> User:
+    """获取或创建默认访客用户"""
+    guest = db.query(User).filter(User.username == "guest").first()
+    if not guest:
+        guest = User(
+            username="guest",
+            real_name="访客",
+            role="admin",
+            is_active=True,
+            hashed_password=hash_password("guest123"),
+        )
+        db.add(guest)
+        db.commit()
+        db.refresh(guest)
+    return guest
+
+
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(oauth2_scheme_optional),
     db: Session = Depends(get_db),
 ) -> User:
-    """从 JWT 令牌中获取当前登录用户"""
+    """从 JWT 令牌中获取当前登录用户（可选认证，无 token 时返回访客用户）"""
+    if not token:
+        return _get_or_create_guest(db)
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="无法验证凭据",

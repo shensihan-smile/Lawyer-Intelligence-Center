@@ -41,3 +41,5 @@ backend/app/data/temp/
 # Electron
 frontend/node_modules/
 frontend/dist/
+backend/app/data/
+*.traineddata

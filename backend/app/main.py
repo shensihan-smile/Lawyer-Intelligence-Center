@@ -1,9 +1,11 @@
 """FastAPI 应用主文件"""
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, users, cases, clients, documents, schedules, billing
+from app.api import auth, users, cases, clients, documents, schedules, billing, dockets
+from app.models.docket import DocketRecord  # 确保表被创建
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -36,6 +38,18 @@ app.include_router(clients.router, prefix="/api/clients", tags=["客户管理"])
 app.include_router(documents.router, prefix="/api/documents", tags=["文档管理"])
 app.include_router(schedules.router, prefix="/api/schedules", tags=["日程管理"])
 app.include_router(billing.router, prefix="/api/billing", tags=["财务管理"])
+app.include_router(dockets.router, prefix="/api/dockets", tags=["卷宗管理"])
+
+# 前端页面路由（如果模板存在则加载）
+try:
+    from app.routes_pages import router as pages_router
+    from fastapi.staticfiles import StaticFiles
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    os.makedirs(static_dir, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    app.include_router(pages_router)
+except ImportError:
+    pass  # 纯 API 模式，不加载页面
 
 
 @app.get("/api/health")
