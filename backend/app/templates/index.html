@@ -320,7 +320,9 @@ function render(k){
     default:h=rdash();
   }
   $('pc').innerHTML=h;
-  // 特定页面的额外初始化
+  // 加载异步数据
+  if(k==='schedules')setTimeout(function(){loadCal()},50);
+  if(k==='messages')setTimeout(function(){loadMsgData()},50);
   if(k==='billing')initTimer();
 }
 
@@ -757,8 +759,7 @@ function rsched(){
     '<button class="btn btn-o btn-sm" onclick="smsModal()">📱 解析12368短信</button>'+
     '<button class="btn btn-p btn-sm" onclick="osched()">＋ 新增日程</button></div></div>'+
     '<div id="calArea" style="margin-bottom:14px">加载中...</div>'+
-    '<div id="schedList"></div></div></div>'+buildCalStyles()+
-    '<script>setTimeout(function(){loadCal()},50)</script>';
+    '<div id="schedList"></div></div></div>'+buildCalStyles();
 }
 function buildCalStyles(){
   return'<style>.cal-c{background:#fff;border-radius:8px;overflow:hidden}.cal-h{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fafafa;border-bottom:1px solid #f0f0f0}.cal-g{display:grid;grid-template-columns:repeat(7,1fr)}.cal-dn{text-align:center;padding:6px 2px;font-size:11px;font-weight:600;color:var(--tx2);background:#fafafa}.cal-d{min-height:80px;padding:3px;border-right:1px solid #f5f5f5;border-bottom:1px solid #f5f5f5;font-size:10px;cursor:pointer}.cal-d:hover{background:#fafbff}.cal-d .dn{padding:2px 5px;font-weight:600;font-size:12px}.cal-d.om{background:#fafafa;color:#ccc}.cal-d.tdy{background:#e6f0ff}.cal-d .ev{margin:1px 0;padding:1px 4px;border-radius:2px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.et-t{background:#fff0f0;color:#cf1322}.et-m{background:#e6f0ff;color:var(--bl)}.et-o{background:#f0fff0;color:#389e0d}.et-conf{background:var(--rd);color:#fff;animation:blink 0.5s infinite alternate}.wk-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.wk-d{background:#fff;min-height:100px;padding:4px;border:1px solid #f0f0f0;font-size:10px}.dy-t{font-size:14px;padding:8px 12px;margin:2px 0;border-radius:6px;cursor:pointer}.dy-t.trial{background:#fff0f0}.dy-t.meeting{background:#e6f0ff}.dy-t.other{background:#f0fff0}</style>'}
@@ -1014,8 +1015,7 @@ function rmsgs(){
   return'<div class="pnl"><div class="pnl-hd">💬 消息识别 <span style="font-weight:400;font-size:12px;color:var(--tx3)">（粘贴消息 → 自动识别 → 生成待办）</span></div><div class="pnl-bd">'+
     '<button class="btn btn-p" onclick="msgModal()" style="margin-bottom:16px">＋ 录入新消息</button>'+
     '<div id="msgHistory">加载中...</div></div></div>'+
-    '<div class="pnl"><div class="pnl-hd">✅ 待办任务</div><div class="pnl-bd"><div id="taskList">加载中...</div></div></div>'+
-    '<script>setTimeout(loadMsgData,50)</script>'
+    '<div class="pnl"><div class="pnl-hd">✅ 待办任务</div><div class="pnl-bd"><div id="taskList">加载中...</div></div></div>'
 }
 function loadMsgData(){
   apiFetch('/api/lw/messages?limit=50').then(function(res){
