@@ -4,8 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, users, cases, clients, documents, schedules, billing, dockets
+from app.api import auth, users, cases, clients, documents, schedules, billing, dockets, lightweight
 from app.models.docket import DocketRecord  # 确保表被创建
+from app.models.lightweight import StoredMessage, StoredTask, StoredTimeRecord, StoredBillingConfig, StoredBill
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -39,6 +40,7 @@ app.include_router(documents.router, prefix="/api/documents", tags=["文档管�
 app.include_router(schedules.router, prefix="/api/schedules", tags=["日程管理"])
 app.include_router(billing.router, prefix="/api/billing", tags=["财务管理"])
 app.include_router(dockets.router, prefix="/api/dockets", tags=["卷宗管理"])
+app.include_router(lightweight.router, prefix="/api/lw", tags=["轻量数据"])
 
 # 前端页面路由（如果模板存在则加载）
 try:
