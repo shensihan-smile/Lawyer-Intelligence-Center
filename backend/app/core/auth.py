@@ -1,8 +1,9 @@
 """认证相关功能"""
 from datetime import datetime, timedelta
 from typing import Optional
+import hashlib
+import os
 from jose import JWTError, jwt
-import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -15,16 +16,30 @@ oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_e
 
 
 def hash_password(password: str) -> str:
-    """对密码进行哈希加密"""
-    # bcrypt 密码长度限制为 72 字节
-    password_bytes = password.encode("utf-8")[:72]
-    return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
+    """对密码进行哈希加密（使用 SHA-256 + 随机盐，无需第三方库）"""
+    salt = os.urandom(32).hex()                      # 生成 32 字节随机盐
+    pwd_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        100000,                                       # 10 万次迭代
+    ).hex()
+    return f"{salt}${pwd_hash}"                      # 格式：盐$哈希值
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """验证密码是否正确"""
-    password_bytes = plain_password.encode("utf-8")[:72]
-    return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
+    try:
+        salt, pwd_hash = hashed_password.split("$", 1)
+    except (ValueError, AttributeError):
+        return False
+    computed = hashlib.pbkdf2_hmac(
+        "sha256",
+        plain_password.encode("utf-8"),
+        salt.encode("utf-8"),
+        100000,
+    ).hex()
+    return computed == pwd_hash
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

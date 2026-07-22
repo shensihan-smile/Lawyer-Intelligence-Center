@@ -3,7 +3,7 @@ uvicorn[standard]==0.32.0
 sqlalchemy==2.0.36
 pydantic==2.10.0
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+# passlib[bcrypt]==1.7.4  ← 已移除，改用 Python 内置 hashlib
 python-multipart==0.0.17
 python-docx==1.1.2
 PyMuPDF==1.24.0
