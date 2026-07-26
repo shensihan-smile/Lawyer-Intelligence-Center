@@ -198,7 +198,10 @@ table tbody tr:hover{background:#fafbff}
 /* ============================================================
    全局状态
    ============================================================ */
-var API = '';
+var _TOKEN='{{ token }}';
+var API='';
+var _TQ=_TOKEN?'token='+_TOKEN:'';
+(function(u){if(!_TOKEN)return;var i=u.indexOf('?');if(i!==-1)return;var p=u.indexOf('#');if(p===-1)history.replaceState({},'',u+'?token='+_TOKEN);else history.replaceState({},'',u.slice(0,p)+'?token='+_TOKEN+u.slice(p));})(window.location.href);
 var PG = {};  // 分页
 var PSZ = 12;
 var currentPage = '{{ page }}' || 'dashboard';
@@ -270,17 +273,19 @@ function rpg(k){render(k)}
 /* ============================================================
    API 调用
    ============================================================ */
-var _TQ = (function(){var t=new URLSearchParams(window.location.search).get('token');return t?'&token='+t:'';})();
-function _ft(url){var sep=url.indexOf('?')===-1?'?':'&';return API+url+_TQ.replace('&',sep);}
 function apiFetch(url,opts){
   opts=opts||{};
-  return fetch(_ft(url),{headers:{'Content-Type':'application/json'},...opts})
+  var sep=url.indexOf('?')===-1?'?':'&';
+  var fullUrl=_TQ?API+url+sep+_TQ:API+url;
+  return fetch(fullUrl,{headers:{'Content-Type':'application/json'},...opts})
     .then(function(r){if(!r.ok)throw new Error('请求失败 '+r.status);return r.json()})
     .catch(function(e){console.error(e);throw e})
 }
 
 function apiUpload(url,formData){
-  return fetch(_ft(url),{method:'POST',body:formData})
+  var sep=url.indexOf('?')===-1?'?':'&';
+  var fullUrl=_TQ?API+url+sep+_TQ:API+url;
+  return fetch(fullUrl,{method:'POST',body:formData})
     .then(function(r){if(!r.ok)throw new Error('上传失败 '+r.status);return r.json()})
     .catch(function(e){console.error(e);throw e})
 }
@@ -302,9 +307,9 @@ function navTo(k){
   ns.forEach(function(n){n.classList.remove('ac')});
   var a=document.querySelector('.ni[data-k="'+k+'"]');if(a)a.classList.add('ac');
   $('ttl').textContent=PT[k]||k;
-  // 更新浏览器 URL
-  if(window.history&&k!=='dashboard')window.history.pushState({},'',API+'/'+k);
-  else if(k==='dashboard')window.history.pushState({},'',API+'/');
+  // 更新浏览器 URL（保留 MatPool token）
+  if(window.history&&k!=='dashboard'){var u=k;if(_TOKEN)u=k+'?token='+_TOKEN;window.history.pushState({},'',u);}
+  else if(k==='dashboard'){var u=_TOKEN?'/?token='+_TOKEN:'/';window.history.pushState({},'',u);}
   render(k)
 }
 

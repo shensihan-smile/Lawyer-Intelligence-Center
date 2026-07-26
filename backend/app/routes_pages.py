@@ -14,7 +14,8 @@ jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=True)
 def _render(page_name: str, request: Request) -> HTMLResponse:
     """渲染模板"""
     template = jinja_env.get_template("index.html")
-    html = template.render(request=request, page=page_name)
+    token = request.query_params.get("token", "")
+    html = template.render(request=request, page=page_name, token=token)
     return HTMLResponse(content=html)
 
 
