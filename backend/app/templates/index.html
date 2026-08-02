@@ -275,6 +275,7 @@ function rpg(k){render(k)}
    ============================================================ */
 function apiFetch(url,opts){
   opts=opts||{};
+  var q=url.indexOf('?');if(q!==-1&&url[q-1]!=='/')url=url.slice(0,q)+'/'+url.slice(q);
   var sep=url.indexOf('?')===-1?'?':'&';
   var fullUrl=_TQ?API+url+sep+_TQ:API+url;
   return fetch(fullUrl,{headers:{'Content-Type':'application/json'},...opts})
@@ -283,6 +284,7 @@ function apiFetch(url,opts){
 }
 
 function apiUpload(url,formData){
+  var q=url.indexOf('?');if(q!==-1&&url[q-1]!=='/')url=url.slice(0,q)+'/'+url.slice(q);
   var sep=url.indexOf('?')===-1?'?':'&';
   var fullUrl=_TQ?API+url+sep+_TQ:API+url;
   return fetch(fullUrl,{method:'POST',body:formData})
@@ -479,7 +481,7 @@ function ocase(id){
         trial_date:$('cf_trialDate').value||null,
         notes:$('cf_notes').value.trim()
       };
-      var method=c?'PUT':'POST',url='/api/cases'+(c?'/'+c.id:'');
+      var method=c?'PUT':'POST',url='/api/cases/'+(c?c.id:'');
       if(!data.case_number){toast('请输入案号','err');return}
       if(!data.case_reason){toast('请输入案由','err');return}
       if(!data.court){toast('请输入受理法院','err');return}
@@ -546,7 +548,7 @@ function oclient(id){
     fmodal(c?'编辑客户':'新增客户',h,function(){
       var data={name:$('cf_name').value.trim(),contact:$('cf_contact').value.trim(),phone:$('cf_phone').value.trim(),wechat:$('cf_wechat').value.trim(),email:$('cf_email').value.trim(),address:$('cf_address').value.trim(),notes:$('cf_notes').value.trim()};
       if(!data.name){toast('请输入客户名称','err');return}
-      var method=c?'PUT':'POST',url='/api/clients'+(c?'/'+c.id:'');
+      var method=c?'PUT':'POST',url='/api/clients/'+(c?c.id:'');
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(){
         closemodal();loadClients();toast(c?'客户已更新 ✅':'客户已添加 ✅','ok')
       }).catch(function(){toast('操作失败','err')})
@@ -616,7 +618,7 @@ function odoc(id){
       var data={original_name:$('cf_fileName').value.trim(),doc_category:$('cf_docType').value,version:$('cf_version').value.trim()||'1',author:$('cf_author').value.trim(),notes:$('cf_notes').value.trim()};
       if(!data.original_name){toast('请输入文件名','err');return}
       var cid=$('cf_caseId').value;if(cid)data.case_id=parseInt(cid);
-      var method=d?'PUT':'POST',url='/api/documents'+(d?'/'+d.id:'');
+      var method=d?'PUT':'POST',url='/api/documents/'+(d?d.id:'');
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(){
         closemodal();loadDocs();toast(d?'文档已更新 ✅':'文档已添加 ✅','ok')
       }).catch(function(){toast('操作失败','err')})
@@ -857,7 +859,7 @@ function osched(id){
     fmodal(s?'编辑日程':'新增日程',h,function(){
       var data={title:$('cf_title').value.trim(),event_type:$('cf_type').value,start_date:$('cf_startDate').value,start_time:$('cf_startTime').value,location:$('cf_location').value.trim(),case_number:$('cf_caseNumber').value.trim(),notes:$('cf_notes').value.trim()};
       if(!data.title){toast('请输入标题','err');return}if(!data.start_date){toast('请选择日期','err');return}
-      var method=s?'PUT':'POST',url='/api/schedules'+(s?'/'+s.id:'');
+      var method=s?'PUT':'POST',url='/api/schedules/'+(s?s.id:'');
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(){
         closemodal();loadCal();toast(s?'日程已更新 ✅':'日程已添加 ✅','ok')
       }).catch(function(){toast('操作失败','err')})
@@ -878,7 +880,7 @@ function smsModal(){
     if(r.caseNumber&&r.hearingDate){
       if(confirm('解析成功！是否自动创建庭审日程？')){
         var data={title:'庭审：'+r.caseNumber,event_type:'trial',start_date:r.hearingDate,start_time:r.hearingTime||'09:00',location:r.location||'',case_number:r.caseNumber,notes:'来自12368短信解析'};
-        apiFetch('/api/schedules',{method:'POST',body:JSON.stringify(data)}).then(function(){closemodal();loadCal();toast('已自动创建庭审日程 ✅','ok')}).catch(function(){toast('创建失败','err')})
+        apiFetch('/api/schedules/',{method:'POST',body:JSON.stringify(data)}).then(function(){closemodal();loadCal();toast('已自动创建庭审日程 ✅','ok')}).catch(function(){toast('创建失败','err')})
       }
     }
   })
@@ -937,7 +939,7 @@ function loadBillingConfig(){
 }
 function saveBillingConfig(){
   var data={hourlyRate:$('cfg_hourlyRate').value,fixedFee:$('cfg_fixedFee').value};
-  apiFetch('/api/lw/billing-config',{method:'POST',body:JSON.stringify(data)}).then(function(){
+  apiFetch('/api/lw/billing-config/',{method:'POST',body:JSON.stringify(data)}).then(function(){
     toast('计费配置已保存 ✅','ok')
   }).catch(function(){toast('保存失败','err')})
 }
@@ -958,7 +960,7 @@ function startTimer(){
 function stopTimer(){
   if(!timerRunning)return;timerRunning=false;if(timerInterval)clearInterval(timerInterval);
   var min=Math.max(1,Math.ceil(timerSeconds/60));
-  apiFetch('/api/lw/time-records',{method:'POST',body:JSON.stringify({case_name:timerCaseName,category:timerCategory,minutes:min,date:new Date().toISOString().slice(0,10)})}).then(function(){
+  apiFetch('/api/lw/time-records/',{method:'POST',body:JSON.stringify({case_name:timerCaseName,category:timerCategory,minutes:min,date:new Date().toISOString().slice(0,10)})}).then(function(){
     timerCaseName='';render('billing');toast('已保存 '+min+' 分钟工时 ✅','ok')
   }).catch(function(){render('billing');toast('保存失败','err')})
 }
@@ -975,7 +977,7 @@ function manualTime(){
       var min=parseInt($('cf_minutes').value);if(!min||min<1){toast('请输入有效时长','err');return}
       var cid=$('cf_caseId').value,cn='';
       if(cid){var ca=cases.find(function(x){return x.id==parseInt(cid)});if(ca)cn=ca.case_number}
-      apiFetch('/api/lw/time-records',{method:'POST',body:JSON.stringify({case_name:cn,category:$('cf_category').value,minutes:min,date:$('cf_date').value})}).then(function(){
+      apiFetch('/api/lw/time-records/',{method:'POST',body:JSON.stringify({case_name:cn,category:$('cf_category').value,minutes:min,date:$('cf_date').value})}).then(function(){
         closemodal();loadBillingData();toast('工时已补录 ✅','ok')
       }).catch(function(){toast('保存失败','err')})
     })
@@ -1007,7 +1009,7 @@ function genBill(){
     if(totalMin===0){toast('本月无工时记录','err');return}
     apiFetch('/api/lw/billing-config').then(function(cfg){
       var rate=parseFloat(cfg.hourlyRate||'500'),amt=Math.round(totalMin/60*rate*100)/100;
-      apiFetch('/api/lw/bills',{method:'POST',body:JSON.stringify({period:period,total_min:totalMin,total_amt:amt,rate:rate})}).then(function(){
+      apiFetch('/api/lw/bills/',{method:'POST',body:JSON.stringify({period:period,total_min:totalMin,total_amt:amt,rate:rate})}).then(function(){
         loadBillingData();toast('账单已生成：'+fma(amt)+' 元 ✅','ok')
       }).catch(function(){toast('生成账单失败','err')})
     }).catch(function(){toast('获取费率失败','err')})
@@ -1050,9 +1052,9 @@ function msgModal(){
   fmodal('录入消息',h,function(){
     var content=$('cf_content').value.trim();if(!content){toast('请输入消息内容','err');return}
     var r=parseMessage(content),source=$('cf_source').value;
-    apiFetch('/api/lw/messages',{method:'POST',body:JSON.stringify({source:source,content:content,result:r.summary})}).then(function(){
+    apiFetch('/api/lw/messages/',{method:'POST',body:JSON.stringify({source:source,content:content,result:r.summary})}).then(function(){
       if(r.task){
-        apiFetch('/api/lw/tasks',{method:'POST',body:JSON.stringify({title:r.task,priority:r.priority,related:r.client||r.caseNum||'',deadline:r.deadline||'',status:'待处理'})}).then(function(){
+        apiFetch('/api/lw/tasks/',{method:'POST',body:JSON.stringify({title:r.task,priority:r.priority,related:r.client||r.caseNum||'',deadline:r.deadline||'',status:'待处理'})}).then(function(){
           closemodal();loadMsgData();toast('消息已识别，已生成待办 ✅','ok')
         }).catch(function(){closemodal();loadMsgData()})
       }else{closemodal();loadMsgData();toast('消息已保存 ✅','ok')}
@@ -1120,7 +1122,7 @@ function ouser(id){
       if(!un){toast('请输入用户名','err');return}if(!rn){toast('请输入姓名','err');return}
       var data={username:un,real_name:rn,role:$('cf_role').value,department:$('cf_department').value.trim(),phone:$('cf_phone').value.trim(),email:$('cf_email').value.trim()};
       var pw=$('cf_password').value.trim();if(pw)data.password=pw;
-      var method=u?'PUT':'POST',url='/api/users'+(u?'/'+u.id:'');
+      var method=u?'PUT':'POST',url='/api/users/'+(u?u.id:'');
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(){
         closemodal();loadUsers();toast(u?'用户已更新 ✅':'用户已添加 ✅','ok')
       }).catch(function(){toast('操作失败，可能需要管理员权限','err')})
