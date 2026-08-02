@@ -198,7 +198,7 @@ table tbody tr:hover{background:#fafbff}
 /* ============================================================
    全局状态
    ============================================================ */
-var _TOKEN='{{ token }}';
+var _TOKEN=(function(){var m=location.search.match(/[?&]token=([^&]+)/);return m?m[1]:'';})();
 var API='';
 var _TQ=_TOKEN?'token='+_TOKEN:'';
 (function(u){if(!_TOKEN)return;var i=u.indexOf('?');if(i!==-1)return;var p=u.indexOf('#');if(p===-1)history.replaceState({},'',u+'?token='+_TOKEN);else history.replaceState({},'',u.slice(0,p)+'?token='+_TOKEN+u.slice(p));})(window.location.href);
