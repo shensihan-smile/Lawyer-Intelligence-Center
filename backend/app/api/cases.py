@@ -197,8 +197,9 @@ def list_cases(
     # 非管理员只看自己创建的
     q = _filter_by_role(q, current_user, Case)
 
+    total = q.count()
     cases = q.order_by(Case.created_at.desc()).all()
-    return [_case_to_dict(c) for c in cases]
+    return {"total": total, "items": [_case_to_dict(c) for c in cases]}
 
 
 @router.get("/stages")
