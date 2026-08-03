@@ -176,7 +176,7 @@ table tbody tr:hover{background:#fafbff}
   <div class="drop-box" id="dropBox" onclick="document.getElementById('dzInput').click()">
     <div class="dz-inner">
       <span class="dz-icon">📤</span>
-      拖文件到这里<br>自动识别卷宗
+      拖文件到这里<br>自动OCR识别归档
     </div>
   </div>
   <input type="file" id="dzInput" accept="image/*,.pdf" style="display:none" onchange="handleDropFiles(this.files)">
@@ -217,7 +217,6 @@ var NI = [
   {k:'clients',i:'👥',l:'客户管理'},
   {k:'cases',i:'⚖️',l:'案件管理'},
   {k:'documents',i:'📄',l:'文档管理'},
-  {k:'dockets',i:'📁',l:'卷宗记录'},
   {k:'schedules',i:'📅',l:'日程与庭审'},
   {k:'billing',i:'💰',l:'财务管理'},
   {k:'messages',i:'💬',l:'消息识别'},
@@ -322,8 +321,7 @@ function render(k){
   var h='';
   switch(k){
     case'dashboard':h=rdash();break;case'clients':h=rclients();break;
-    case'cases':h=rcases();break;case'documents':h=rdocs();break;
-    case'dockets':h=rdockets();break;case'schedules':h=rsched();break;
+    case'cases':h=rcases();break;case'documents':h=rdocs();break;case'schedules':h=rsched();break;
     case'billing':h=rbill();break;case'messages':h=rmsgs();break;
     case'system':h=rsys();break;
     default:h=rdash();
@@ -339,7 +337,7 @@ function render(k){
 function rdash(){
   var h='<div class="stat-row" id="statRow">加载中...</div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">';
-  h+='<div class="pnl"><div class="pnl-hd" onclick="navTo(\'dockets\')" style="cursor:pointer">📋 案源信息（卷宗）</div><div class="pnl-bd" id="dashDockets">加载中...</div></div>';
+  h+='<div class="pnl"><div class="pnl-hd" onclick="navTo(\'documents\')" style="cursor:pointer">📄 最近文档</div><div class="pnl-bd" id="dashDockets">加载中...</div></div>';
   h+='<div class="pnl"><div class="pnl-hd" onclick="navTo(\'cases\')" style="cursor:pointer">⚖️ 在办案件</div><div class="pnl-bd" id="dashCases">加载中...</div></div>';
   h+='<div class="pnl"><div class="pnl-hd" style="cursor:default">🗄️ 数据库总览</div><div class="pnl-bd" id="dashStats">加载中...</div></div>';
   h+='</div>';
@@ -352,27 +350,26 @@ function loadDashboardData(){
   // 并行加载
   Promise.all([
     apiFetch('/api/cases?limit=100').catch(function(){return{items:[]}}),
-    apiFetch('/api/dockets?limit=100').catch(function(){return{items:[]}}),
-    apiFetch('/api/dockets/stats/summary').catch(function(){return{total:0,images:0,pdfs:0,linked:0}}),
-    apiFetch('/api/clients?limit=100').catch(function(){return{items:[]}})
+    apiFetch('/api/clients?limit=100').catch(function(){return{items:[]}}),
+    apiFetch('/api/documents?limit=100').catch(function(){return{items:[]}})
   ]).then(function(results){
-    var cases=results[0].items||[],dockets=results[1].items||[];
-    var dStats=results[2],clients=results[3].items||[];
+    var cases=results[0].items||[],clients=results[1].items||[];
+    var docs=results[2].items||[];
     var active=cases.filter(function(c){return c.case_stage!=='结案'&&c.case_stage!=='closed'}).length;
 
     // 统计卡片
     $('statRow').innerHTML=
       '<div class="si" onclick="navTo(\'cases\')"><div class="sicon" style="background:#e6f0ff">📋</div><div><div class="snum">'+cases.length+'</div><div class="slbl">案件总数</div></div></div>'+
       '<div class="si" onclick="navTo(\'cases\')"><div class="sicon" style="background:#fff7e6">⚡</div><div><div class="snum">'+active+'</div><div class="slbl">在办案件</div></div></div>'+
-      '<div class="si" onclick="navTo(\'dockets\')"><div class="sicon" style="background:#f0fff0">📁</div><div><div class="snum">'+dStats.total+'</div><div class="slbl">卷宗总数</div></div></div>'+
-      '<div class="si"><div class="sicon" style="background:#f9f0ff">📤</div><div><div class="snum">'+dockets.filter(function(d){return d.created_at&&d.created_at.slice(0,10)===new Date().toISOString().slice(0,10)}).length+'</div><div class="slbl">今日上传</div></div></div>';
+      '<div class="si" onclick="navTo(\'documents\')"><div class="sicon" style="background:#f0fff0">📄</div><div><div class="snum">'+docs.length+'</div><div class="slbl">文档总数</div></div></div>'+
+      '<div class="si"><div class="sicon" style="background:#f9f0ff">📤</div><div><div class="snum">'+docs.filter(function(d){return(d.uploaded_at||d.created_at||'').slice(0,10)===new Date().toISOString().slice(0,10)}).length+'</div><div class="slbl">今日上传</div></div></div>';
 
-    // 案源信息
+    // 最近文档
     var dh='';
-    if(dockets.length===0)dh='<div class="empty"><p>暂无卷宗记录</p><button class="btn btn-p btn-sm" onclick="navTo(\'dockets\')">去上传文件</button></div>';
-    else{dh='<table><thead><tr><th>标题</th><th>类型</th><th>识别摘要</th><th>时间</th></tr></thead><tbody>';
-      dockets.slice(0,5).forEach(function(d){
-        dh+='<tr style="cursor:pointer" onclick="navTo(\'dockets\')"><td><b>'+esc(d.title||d.file_name)+'</b></td><td>'+(d.file_type==='pdf'?'📄 PDF':'🖼 图片')+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.summary||'-')+'</td><td>'+fmd(d.created_at?d.created_at.slice(0,10):'')+'</td></tr>';
+    if(docs.length===0)dh='<div class="empty"><p>暂无文档记录</p><button class="btn btn-p btn-sm" onclick="navTo(\'documents\')">去上传文件</button></div>';
+    else{dh='<table><thead><tr><th>文件名</th><th>类型</th><th>关联案件</th><th>时间</th></tr></thead><tbody>';
+      docs.slice(0,5).forEach(function(d){
+        dh+='<tr style="cursor:pointer" onclick="navTo(\'documents\')"><td><b>'+esc(d.original_name||d.filename||'未命名')+'</b></td><td>'+esc(d.doc_category||'-')+'</td><td>'+esc(d.case_number||'-')+'</td><td>'+fmd((d.uploaded_at||d.created_at||'').slice(0,10))+'</td></tr>';
       });
       dh+='</tbody></table>';}
     if($('dashDockets'))$('dashDockets').innerHTML=dh;
@@ -393,10 +390,7 @@ function loadDashboardData(){
       '<div style="line-height:2.2;font-size:13px">'+
       '<div>📋 案件总数：<b>'+cases.length+'</b> 件</div>'+
       '<div>⚡ 在办案件：<b>'+active+'</b> 件</div>'+
-      '<div>📁 卷宗记录：<b>'+dStats.total+'</b> 条</div>'+
-      '<div>🖼 图片卷宗：<b>'+dStats.images+'</b> 条</div>'+
-      '<div>📄 PDF卷宗：<b>'+dStats.pdfs+'</b> 条</div>'+
-      '<div>🔗 已关联案件：<b>'+dStats.linked+'</b> 条</div>'+
+      '<div>📄 文档总数：<b>'+docs.length+'</b> 条</div>'+
       '<div>👥 客户总数：<b>'+clients.length+'</b> 位</div>'+
       '</div>';
   });
@@ -562,12 +556,29 @@ function dclient(id){confirmm('确认删除','确定删除该客户吗？',funct
 
 /* ---- 文档管理 ---- */
 function rdocs(){
-  var h='<div class="pnl"><div class="pnl-hd">📄 文档列表 <span style="font-weight:400;font-size:12px;color:var(--tx3)">（文件元数据管理）</span></div><div class="pnl-bd">';
+  var h='<div class="pnl"><div class="pnl-hd">📄 文档列表 <span style="font-weight:400;font-size:12px;color:var(--tx3)">（拖拽上传 → OCR识别 → 自动归档案件）</span></div><div class="pnl-bd">';
+  // OCR 拖拽上传区
+  h+='<div style="border:2px dashed #b3c6e7;border-radius:10px;padding:24px;text-align:center;background:#fafbff;margin-bottom:14px;cursor:pointer" id="docketDropZone" onclick="var i=document.createElement(\'input\');i.type=\'file\';i.accept=\'image/*,.pdf\';i.multiple=true;i.onchange=function(){handleDropFiles(i.files)};i.click()">';
+  h+='<div style="font-size:36px;margin-bottom:4px">📤</div>';
+  h+='<div style="font-size:15px;font-weight:600;color:var(--nv);margin-bottom:2px">点击或拖拽文件到此区域</div>';
+  h+='<div style="font-size:12px;color:var(--tx3)">支持图片（PNG/JPG/BMP）和 PDF 文件，最大 50MB，上传后自动 OCR 识别并归档</div>';
+  h+='<div id="upStatus" style="display:none;margin-top:8px;font-size:14px;color:var(--nv)"></div>';
+  h+='<div id="upProgress" style="display:none;margin-top:6px;height:6px;background:#e0e0e0;border-radius:3px"><div id="upBar" style="height:100%;background:var(--nv);border-radius:3px;width:0%;transition:width .3s"></div></div>';
+  h+='</div>';
   h+='<div class="tbar"><div class="tbar-l"><input type="text" id="doc_s" placeholder="🔍 搜索文件名..." oninput="rpg(\'docs\')" style="width:240px">';
   h+='<select id="doc_t" onchange="rpg(\'docs\')"><option value="">全部类型</option><option>法律意见书</option><option>合同草稿</option><option>起诉状</option><option>答辩状</option><option>代理词</option><option>证据清单</option><option>其他</option></select></div>';
   h+='<div class="tbar-r"><button class="btn btn-p" onclick="odoc()">＋ 新增文档</button></div></div>';
   h+='<div id="docsTable">加载中...</div></div></div>';
-  setTimeout(loadDocs,50);
+  setTimeout(function(){
+    loadDocs();
+    // 绑定拖拽事件
+    var dz=$('docketDropZone');
+    if(dz){
+      dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over')});
+      dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over')});
+      dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');handleDropFiles(e.dataTransfer.files)});
+    }
+  },100);
   return h
 }
 
@@ -629,88 +640,8 @@ function ddoc(id){confirmm('确认删除','确定删除该文档吗？',function
   apiFetch('/api/documents/'+id,{method:'DELETE'}).then(function(){loadDocs();toast('已删除','err')}).catch(function(){toast('删除失败','err')})
 })}
 
-/* ---- 卷宗记录（新增核心功能） ---- */
-function rdockets(){
-  var h='<div class="pnl"><div class="pnl-hd">📁 卷宗记录 <span style="font-weight:400;font-size:12px;color:var(--tx3)">（拖拽上传 → 自动OCR识别）</span></div><div class="pnl-bd">';
-  h+='<div class="tbar"><div class="tbar-l"><input type="text" id="dkt_s" placeholder="🔍 搜索卷宗..." oninput="rpg(\'dockets\')" style="width:240px"></div>';
-  h+='<div class="tbar-r"><label class="btn btn-p" style="cursor:pointer">📤 选择文件上传<input type="file" accept="image/*,.pdf" style="display:none" onchange="handleDropFiles(this.files)"></label></div></div>';
-
-  // 大拖拽区
-  h+='<div style="border:2px dashed #b3c6e7;border-radius:10px;padding:40px;text-align:center;background:#fafbff;margin-bottom:14px;cursor:pointer" id="docketDropZone" onclick="var i=document.createElement(\'input\');i.type=\'file\';i.accept=\'image/*,.pdf\';i.onchange=function(){handleDropFiles(i.files)};i.click()">';
-  h+='<div style="font-size:48px;margin-bottom:8px">📤</div>';
-  h+='<div style="font-size:16px;font-weight:600;color:var(--nv);margin-bottom:4px">点击或拖拽文件到此区域</div>';
-  h+='<div style="font-size:13px;color:var(--tx3)">支持图片（PNG/JPG/BMP）和 PDF 文件，最大 50MB<br>上传后自动进行文字识别</div>';
-  h+='</div>';
-  h+='<div id="docketsTable">加载中...</div>';
-  h+='</div></div>';
-  setTimeout(function(){
-    loadDockets();
-    // 绑定拖拽事件
-    var dz=$('docketDropZone');
-    if(dz){
-      dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over')});
-      dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over')});
-      dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');handleDropFiles(e.dataTransfer.files)});
-    }
-  },100);
-  return h
-}
-
-function loadDockets(){
-  apiFetch('/api/dockets?limit=200').then(function(res){
-    var all=res.items||[];
-    var s=($('dkt_s')?$('dkt_s').value:'').toLowerCase();
-    if(s)all=all.filter(function(d){return(d.title+';'+d.file_name+';'+d.summary).toLowerCase().indexOf(s)>-1});
-
-    var tp=Math.ceil(all.length/PSZ)||1;if(PG.dockets>tp)PG.dockets=tp;
-    var st=(PG.dockets-1)*PSZ,pg=all.slice(st,st+PSZ);
-
-    var h='';
-    if(pg.length===0)h='<div class="empty"><div class="eicon">📁</div><p>暂无卷宗记录</p><p style="font-size:13px;color:var(--tx3)">请在上方拖拽或点击上传文件</p></div>';
-    else{
-      h='<div class="tbl-wrap"><table><thead><tr><th>标题</th><th>文件名</th><th>类型</th><th>识别摘要</th><th>识别引擎</th><th>关联案件</th><th>上传时间</th><th style="width:150px">操作</th></tr></thead><tbody>';
-      pg.forEach(function(d){
-        h+='<tr><td>📎 <b style="color:var(--nv);cursor:pointer" onclick="viewDocket('+d.id+')">'+esc(d.title||d.file_name)+'</b></td><td>'+esc((d.file_name||'').slice(0,30))+'</td><td>'+(d.file_type==='pdf'?'📄 PDF':'🖼 图片')+'</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.summary||'-')+'</td><td style="font-size:11px;color:var(--tx3)">'+esc(d.ocr_method||'-')+'</td><td>'+esc(d.case_id||'-')+'</td><td>'+fmd(d.created_at?d.created_at.slice(0,10):'')+'</td><td><button class="btn btn-o btn-sm" onclick="viewDocket('+d.id+')">👁</button> <button class="btn btn-s btn-sm" onclick="linkDocket('+d.id+')">🔗</button> <button class="btn btn-d btn-sm" onclick="ddocket('+d.id+')">🗑</button></td></tr>';
-      });
-      h+='</tbody></table></div>';
-    }
-    h+=buildPager('dockets',all.length,'loadDockets()');
-    if($('docketsTable'))$('docketsTable').innerHTML=h;
-  }).catch(function(){
-    if($('docketsTable'))$('docketsTable').innerHTML='<div class="empty"><p>加载失败，请确保后端服务已启动</p></div>';
-  })
-}
-
-function viewDocket(id){
-  apiFetch('/api/dockets/'+id).then(function(d){
-    modal('<div class="modal-mask" onclick="if(event.target===this)closemodal()"><div class="modal"><div class="modal-hd"><h3>📁 '+esc(d.title||d.file_name)+'</h3><button class="modal-x" onclick="closemodal()">✕</button></div><div class="modal-bd">'+
-      '<div style="margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--tx2)"><span>📄 '+esc(d.file_name)+'</span><span>'+(d.file_type==='pdf'?'📄 PDF':'🖼 图片')+'</span><span>📦 '+(d.file_size?Math.round(d.file_size/1024)+' KB':'未知')+'</span><span>🔧 '+esc(d.ocr_method)+'</span></div>'+
-      '<div style="background:#f6f8fa;padding:14px;border-radius:6px;max-height:400px;overflow-y:auto"><pre style="white-space:pre-wrap;font-size:13px;line-height:1.8;font-family:inherit;margin:0">'+esc(d.recognized_text||'(未识别到文字)')+'</pre></div>'+
-      '<div style="margin-top:12px;font-size:12px;color:var(--tx3)">共 '+(d.recognized_text?d.recognized_text.length:0)+' 个字符 | 上传时间：'+fmd(d.created_at)+'</div>'+
-      '</div><div class="modal-ft"><button class="btn btn-o" onclick="closemodal()">关闭</button></div></div></div>');
-  }).catch(function(){toast('加载详情失败','err')})
-}
-
-function linkDocket(id){
-  apiFetch('/api/cases?limit=200').then(function(res){
-    var cases=res.items||[];
-    if(cases.length===0){toast('请先创建案件','err');return}
-    var h='<div class="fg"><label>选择要关联的案件</label><select id="cf_caseSelect">';
-    cases.forEach(function(c){h+='<option value="'+c.id+'">'+esc(c.case_number)+' — '+esc(c.case_reason||'')+'</option>'});
-    h+='</select></div>';
-    fmodal('关联到案件',h,function(){
-      apiFetch('/api/dockets/'+id+'/link',{method:'PUT',body:JSON.stringify({case_id:parseInt($('cf_caseSelect').value)})}).then(function(){
-        closemodal();loadDockets();toast('已关联 ✅','ok')
-      }).catch(function(){toast('关联失败','err')})
-    })
-  })
-}
-
-function ddocket(id){confirmm('确认删除','确定删除该卷宗记录吗？（服务器上的文件也会被删除）',function(){
-  apiFetch('/api/dockets/'+id,{method:'DELETE'}).then(function(){loadDockets();toast('已删除','err')}).catch(function(){toast('删除失败','err')})
-})}
-
 /* ---- 文件上传处理 ---- */
+var _uploadResults=[];  // 暂存本次上传的OCR结果
 function uploadFiles(files){
   var validFiles=[];
   var allowedExts=['.png','.jpg','.jpeg','.bmp','.tiff','.tif','.gif','.webp','.pdf'];
@@ -726,6 +657,7 @@ function uploadFiles(files){
   if(progress)progress.style.display='block';
   if(statusEl){statusEl.style.display='block';statusEl.textContent='正在上传并识别...'}
 
+  _uploadResults=[];
   var processed=0,successes=0;
   function uploadNext(idx){
     if(idx>=validFiles.length){
@@ -734,7 +666,9 @@ function uploadFiles(files){
         if(progress)progress.style.display='none';
         if(statusEl)statusEl.style.display='none';
       },2000);
-      loadDockets();
+      // OCR完成后 → 弹窗选择案件归档
+      if(_uploadResults.length>0)linkUploadToCase();
+      else loadDocs();
       return;
     }
     var f=validFiles[idx],fd=new FormData();
@@ -742,6 +676,7 @@ function uploadFiles(files){
     if(bar)bar.style.width=Math.round((idx/validFiles.length)*100)+'%';
     apiUpload('/api/dockets/upload',fd).then(function(r){
       successes++;
+      _uploadResults.push(r);
       if(statusEl)statusEl.textContent='已识别：'+f.name+' ✅ ('+(idx+1)+'/'+validFiles.length+')';
       toast('「'+f.name+'」识别成功 ✅','ok');
       uploadNext(idx+1);
@@ -751,6 +686,32 @@ function uploadFiles(files){
     });
   }
   uploadNext(0);
+}
+
+function linkUploadToCase(){
+  // 选择案件 → 逐一创建文档记录
+  apiFetch('/api/cases?limit=200').then(function(res){
+    var cases=res.items||[];
+    if(cases.length===0){toast('请先在案件管理中创建案件','err');loadDocs();return}
+    var h='<div class="fg"><label>选择归档案件</label><select id="cf_caseSelect">';
+    cases.forEach(function(c){h+='<option value="'+c.id+'">'+esc(c.case_number)+' — '+esc(c.case_reason||'')+'</option>'});
+    h+='</select></div>';
+    h+='<div style="font-size:13px;color:var(--tx3);margin-top:8px">共 '+_uploadResults.length+' 个OCR识别结果将归档为该案件的文档</div>';
+    fmodal('📁 OCR结果归档',h,function(){
+      var caseId=parseInt($('cf_caseSelect').value);
+      var done=0,total=_uploadResults.length;
+      _uploadResults.forEach(function(r){
+        apiFetch('/api/documents/',{method:'POST',body:JSON.stringify({
+          original_name:r.file_name||'OCR文档',
+          doc_category:'其他',
+          case_id:caseId,
+          notes:'OCR识别：'+(r.summary||'').slice(0,200)
+        })}).then(function(){
+          done++;if(done>=total){closemodal();loadDocs();toast('已归档 '+total+' 个文档 ✅','ok')}
+        }).catch(function(){done++;if(done>=total){closemodal();loadDocs()}});
+      });
+    })
+  }).catch(function(){toast('获取案件列表失败','err');loadDocs()})
 }
 
 function handleDropFiles(files){if(files&&files.length>0)uploadFiles(files)}
