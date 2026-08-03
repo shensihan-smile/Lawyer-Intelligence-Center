@@ -279,8 +279,17 @@ function apiFetch(url,opts){
   var sep=url.indexOf('?')===-1?'?':'&';
   var fullUrl=_TQ?API+url+sep+_TQ:API+url;
   return fetch(fullUrl,{headers:{'Content-Type':'application/json'},...opts})
-    .then(function(r){if(!r.ok)throw new Error('请求失败 '+r.status);return r.json()})
-    .catch(function(e){console.error(e);throw e})
+    .then(function(r){
+      if(!r.ok){
+        return r.json().then(function(d){throw new Error(d.detail||'请求失败 '+r.status)})
+          .catch(function(parseErr){
+            if(parseErr.message&&parseErr.message.indexOf('请求失败')===0)throw parseErr;
+            throw new Error('请求失败 '+r.status);
+          });
+      }
+      return r.json();
+    })
+    .catch(function(e){console.error('API错误:',e.message);throw e})
 }
 
 function apiUpload(url,formData){
@@ -482,7 +491,7 @@ function ocase(id){
       if(!data.court){toast('请输入受理法院','err');return}
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(){
         closemodal();loadCases();toast(c?'案件已更新 ✅':'案件已添加 ✅','ok')
-      }).catch(function(){toast('操作失败','err')})
+      }).catch(function(e){toast('操作失败: '+(e.message||'未知错误'),'err')})
     })
   })
 }
