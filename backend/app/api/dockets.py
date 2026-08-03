@@ -19,7 +19,7 @@ router = APIRouter()
 DOCKET_UPLOAD_DIR = os.path.join(settings.UPLOAD_DIR, "dockets")
 os.makedirs(DOCKET_UPLOAD_DIR, exist_ok=True)
 
-ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.gif', '.webp', '.pdf'}
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.gif', '.webp', '.pdf', '.docx'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
@@ -80,7 +80,7 @@ async def upload_docket(
     save_path, original_name, ext = _save_upload(file)
 
     # 判断文件类型并执行 OCR
-    file_type = "pdf" if ext == ".pdf" else "image"
+    file_type = "docx" if ext == ".docx" else ("pdf" if ext == ".pdf" else "image")
     ocr_result = recognize_file(save_path, file_type)
 
     # 生成标题

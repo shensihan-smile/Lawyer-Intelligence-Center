@@ -179,13 +179,14 @@ table tbody tr:hover{background:#fafbff}
       拖文件到这里<br>自动OCR识别归档
     </div>
   </div>
-  <input type="file" id="dzInput" accept="image/*,.pdf" style="display:none" onchange="handleDropFiles(this.files)">
+  <input type="file" id="dzInput" accept="image/*,.pdf,.docx" style="display:none" onchange="handleDropFiles(this.files)">
   <div class="upload-progress" id="upProgress"><div class="bar" id="upBar"></div></div>
   <div class="upload-status" id="upStatus"></div>
   <div class="drop-hint">
     <p>支持格式：</p>
     <p>🖼 图片 (PNG/JPG/BMP)</p>
     <p>📄 PDF 文档</p>
+    <p>📝 Word 文档 (.docx)</p>
     <p>最大 50MB</p>
   </div>
 </div>
@@ -558,10 +559,10 @@ function dclient(id){confirmm('确认删除','确定删除该客户吗？',funct
 function rdocs(){
   var h='<div class="pnl"><div class="pnl-hd">📄 文档列表 <span style="font-weight:400;font-size:12px;color:var(--tx3)">（拖拽上传 → OCR识别 → 自动归档案件）</span></div><div class="pnl-bd">';
   // OCR 拖拽上传区
-  h+='<div style="border:2px dashed #b3c6e7;border-radius:10px;padding:24px;text-align:center;background:#fafbff;margin-bottom:14px;cursor:pointer" id="docketDropZone" onclick="var i=document.createElement(\'input\');i.type=\'file\';i.accept=\'image/*,.pdf\';i.multiple=true;i.onchange=function(){handleDropFiles(i.files)};i.click()">';
+  h+='<div style="border:2px dashed #b3c6e7;border-radius:10px;padding:24px;text-align:center;background:#fafbff;margin-bottom:14px;cursor:pointer" id="docketDropZone" onclick="var i=document.createElement(\'input\');i.type=\'file\';i.accept=\'image/*,.pdf,.docx\';i.multiple=true;i.onchange=function(){handleDropFiles(i.files)};i.click()">';
   h+='<div style="font-size:36px;margin-bottom:4px">📤</div>';
   h+='<div style="font-size:15px;font-weight:600;color:var(--nv);margin-bottom:2px">点击或拖拽文件到此区域</div>';
-  h+='<div style="font-size:12px;color:var(--tx3)">支持图片（PNG/JPG/BMP）和 PDF 文件，最大 50MB，上传后自动 OCR 识别并归档</div>';
+  h+='<div style="font-size:12px;color:var(--tx3)">支持图片（PNG/JPG/BMP）、PDF 和 Word（.docx）文件，最大 50MB，上传后自动 OCR 识别并归档</div>';
   h+='<div id="upStatus" style="display:none;margin-top:8px;font-size:14px;color:var(--nv)"></div>';
   h+='<div id="upProgress" style="display:none;margin-top:6px;height:6px;background:#e0e0e0;border-radius:3px"><div id="upBar" style="height:100%;background:var(--nv);border-radius:3px;width:0%;transition:width .3s"></div></div>';
   h+='</div>';
@@ -644,7 +645,7 @@ function ddoc(id){confirmm('确认删除','确定删除该文档吗？',function
 var _uploadResults=[];  // 暂存本次上传的OCR结果
 function uploadFiles(files){
   var validFiles=[];
-  var allowedExts=['.png','.jpg','.jpeg','.bmp','.tiff','.tif','.gif','.webp','.pdf'];
+  var allowedExts=['.png','.jpg','.jpeg','.bmp','.tiff','.tif','.gif','.webp','.pdf','.docx'];
   for(var i=0;i<files.length;i++){
     var f=files[i],ext='.'+f.name.split('.').pop().toLowerCase();
     if(f.size>50*1024*1024){toast('文件「'+f.name+'」超过50MB，已跳过','err');continue}

@@ -136,6 +136,42 @@ def _ocr_pdf_pages(file_path: str) -> str:
         return f"[PDF图片OCR失败] {str(e)}"
 
 
+def extract_docx_text(file_path: str) -> str:
+    """从 Word .docx 文件中提取文字
+
+    Args:
+        file_path: .docx 文件路径
+
+    Returns:
+        提取的文字内容；如果失败返回错误提示字符串
+    """
+    try:
+        from docx import Document
+        doc = Document(file_path)
+        text_parts = []
+
+        # 提取段落文字
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text_parts.append(para.text.strip())
+
+        # 提取表格中的文字
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = []
+                for cell in row.cells:
+                    if cell.text.strip():
+                        row_text.append(cell.text.strip())
+                if row_text:
+                    text_parts.append(' | '.join(row_text))
+
+        return '\n\n'.join(text_parts)
+    except ImportError:
+        return "[提示] python-docx 库未安装，请运行: pip install python-docx"
+    except Exception as e:
+        return f"[Word文档提取失败] {str(e)}"
+
+
 def recognize_file(file_path: str, file_type: str = None) -> dict:
     """统一的文件识别入口
 
@@ -158,6 +194,8 @@ def recognize_file(file_path: str, file_type: str = None) -> dict:
             file_type = 'image'
         elif ext == '.pdf':
             file_type = 'pdf'
+        elif ext == '.docx':
+            file_type = 'docx'
         else:
             file_type = 'image'  # 默认尝试图片识别
 
@@ -189,6 +227,12 @@ def recognize_file(file_path: str, file_type: str = None) -> dict:
             result['method'] = 'Tesseract OCR（PDF扫描件）'
             result['text'] = _ocr_pdf_pages(file_path)
             result['success'] = bool(result['text'].strip())
+    elif file_type == 'docx':
+        # Word 文档
+        text = extract_docx_text(file_path)
+        result['text'] = text
+        result['method'] = 'python-docx 文字提取'
+        result['success'] = bool(text.strip()) and not text.startswith('[')
     else:
         # 图片文件
         text = recognize_image(file_path)
