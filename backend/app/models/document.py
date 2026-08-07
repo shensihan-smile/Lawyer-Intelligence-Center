@@ -1,5 +1,5 @@
 """文档模型"""
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -11,7 +11,7 @@ class Document(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     filename = Column(String(255), nullable=False)
     original_name = Column(String(255), nullable=False)
-    file_path = Column(String(500), nullable=False)
+    file_path = Column(String(500), nullable=True)  # 草稿无物理文件
     file_size = Column(Integer, default=0)  # 字节
     file_type = Column(String(50), default="")
     doc_category = Column(String(30), default="other")  # legal_opinion/contract_draft/complaint/etc.
@@ -20,6 +20,9 @@ class Document(Base):
     version = Column(Integer, default=1)
     author = Column(String(50), default="")
     notes = Column(String(500), default="")
+    is_draft = Column(Integer, default=0, comment="1=编辑器草稿")
+    template_id = Column(Integer, ForeignKey("templates.id"), nullable=True, comment="来源模板ID")
+    editor_content = Column(Text, default="", comment="Quill编辑器HTML内容")
     uploaded_at = Column(DateTime, server_default=func.now())
 
     # ORM 关系

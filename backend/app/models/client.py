@@ -12,6 +12,8 @@ class Client(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(100), nullable=False, index=True)
+    client_type = Column(String(10), default="个人", comment="客户类型：个人/企业")
+    id_number = Column(String(50), default="", comment="身份证号/统一社会信用代码")
     contact_person = Column(String(50), default="")
     phone = Column(String(20), default="")
     wechat = Column(String(50), default="")
@@ -29,3 +31,5 @@ class Client(Base):
     third_party_cases = relationship("Case", secondary=case_third_parties, back_populates="third_party_clients")
     documents = relationship("Document", back_populates="client")
     bills = relationship("Bill", back_populates="client")
+    communications = relationship("CommunicationRecord", back_populates="client", cascade="all, delete-orphan")
+    retainers = relationship("RetainerClient", back_populates="client")

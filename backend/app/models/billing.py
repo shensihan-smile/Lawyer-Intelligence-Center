@@ -31,6 +31,13 @@ class Bill(Base):
     total_amount = Column(Float, default=0)
     status = Column(String(20), default="draft")  # draft/generated/exported/paid
     notes = Column(Text, default="")
+    firm_name = Column(String(200), default="")
+    firm_address = Column(String(200), default="")
+    firm_phone = Column(String(50), default="")
+    lawyer_name = Column(String(50), default="")
+    bank_info = Column(String(200), default="")
+    amount_paid = Column(Float, default=0)  # 已回款金额
+    paid_date = Column(DateTime, nullable=True)  # 回款日期
     generated_at = Column(DateTime, server_default=func.now())
     exported_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
@@ -53,6 +60,7 @@ class BillItem(Base):
     unit_price = Column(Float, default=0)
     quantity = Column(Float, default=1)
     amount = Column(Float, default=0)
+    item_type = Column(String(20), default="legal_fee")  # legal_fee/travel/court/other
 
     # ORM 关系
     bill = relationship("Bill", back_populates="items")

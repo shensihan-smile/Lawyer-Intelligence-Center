@@ -27,6 +27,10 @@ class ScheduleCreate(BaseModel):
     judge: str = ""
     notes: str = ""
     is_parsed_from_sms: bool = False
+    is_all_day: int = 0  # 0=否 1=是
+    reminder_setting: str = "3d"  # none/day0/1d/3d/7d
+    color: str = ""
+    source_deadline: str = ""
 
 
 class ScheduleUpdate(BaseModel):
@@ -38,6 +42,10 @@ class ScheduleUpdate(BaseModel):
     location: Optional[str] = None
     judge: Optional[str] = None
     notes: Optional[str] = None
+    is_all_day: Optional[int] = None
+    reminder_setting: Optional[str] = None
+    color: Optional[str] = None
+    source_deadline: Optional[str] = None
 
 
 # ---------- Helpers ----------
@@ -57,6 +65,10 @@ def _schedule_to_dict(s: Schedule) -> dict:
         "judge": s.judge,
         "notes": s.notes,
         "is_parsed_from_sms": s.is_parsed_from_sms,
+        "is_all_day": s.is_all_day if s.is_all_day else 0,
+        "reminder_setting": s.reminder_setting or "3d",
+        "color": s.color or "",
+        "source_deadline": s.source_deadline or "",
         "created_at": s.created_at.isoformat() if s.created_at else None,
     }
 
@@ -85,7 +97,7 @@ def _check_conflict(db: Session, start: datetime, end: datetime, exclude_id: int
 
 # ---------- Routes ----------
 
-@router.get("/")
+@router.get("")
 def list_schedules(
     start_date: str = Query("", description="开始日期 YYYY-MM-DD"),
     end_date: str = Query("", description="结束日期 YYYY-MM-DD"),
@@ -123,11 +135,133 @@ def get_schedule_types():
     """获取日程类型列表"""
     return [
         {"value": "hearing", "label": "开庭"},
-        {"value": "meeting", "label": "会议"},
+        {"value": "meeting", "label": "会见"},
         {"value": "consultation", "label": "咨询"},
         {"value": "deadline", "label": "截止日期"},
+        {"value": "evidence_deadline", "label": "举证截止"},
+        {"value": "appeal_deadline", "label": "上诉截止"},
+        {"value": "enforcement_deadline", "label": "申请执行截止"},
+        {"value": "preservation_expiry", "label": "保全到期"},
         {"value": "other", "label": "其他"},
     ]
+
+
+@router.get("/auto-deadlines")
+def get_auto_deadlines(
+    case_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """根据案件日期自动计算待生成的期限条目（不自动写入，返回建议列表）
+
+    规则：
+    - 立案日期 filing_date → 举证期限（立案+30天，提前7天预警）
+    - 判决日期 judgment_date → 上诉截止（判决+15天，提前5天预警）
+    - 开庭日期 trial_date → 开庭提醒（提前3天）
+    """
+    from datetime import date
+
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="案件不存在")
+
+    suggestions = []
+
+    # 1. 举证期限：立案日期 + 30 天
+    if case.filing_date:
+        evidence_due = case.filing_date + timedelta(days=30)
+        # 检查是否已存在同类期限
+        existing = db.query(Schedule).filter(
+            Schedule.case_id == case_id,
+            Schedule.source_deadline == "举证期限",
+        ).first()
+        if not existing and evidence_due.date() >= date.today():
+            suggestions.append({
+                "title": f"举证期限截止 - {case.case_number}",
+                "schedule_type": "evidence_deadline",
+                "start_time": evidence_due.isoformat(),
+                "end_time": evidence_due.isoformat(),
+                "reminder_setting": "7d",
+                "source_deadline": "举证期限",
+                "notes": f"立案日期 {case.filing_date.strftime('%Y-%m-%d')} + 30天，举证期限届满",
+                "is_all_day": 1,
+            })
+
+    # 2. 上诉截止：判决日期 + 15 天
+    if case.judgment_date:
+        appeal_due = case.judgment_date + timedelta(days=15)
+        existing = db.query(Schedule).filter(
+            Schedule.case_id == case_id,
+            Schedule.source_deadline == "上诉截止",
+        ).first()
+        if not existing and appeal_due.date() >= date.today():
+            suggestions.append({
+                "title": f"上诉截止 - {case.case_number}",
+                "schedule_type": "appeal_deadline",
+                "start_time": appeal_due.isoformat(),
+                "end_time": appeal_due.isoformat(),
+                "reminder_setting": "5d",
+                "source_deadline": "上诉截止",
+                "notes": f"判决日期 {case.judgment_date.strftime('%Y-%m-%d')} + 15天，上诉期限届满",
+                "is_all_day": 1,
+            })
+
+    # 3. 开庭提醒（设置开庭前3天提醒的日程）
+    if case.trial_date:
+        existing = db.query(Schedule).filter(
+            Schedule.case_id == case_id,
+            Schedule.source_deadline == "开庭提醒",
+        ).first()
+        if not existing and case.trial_date.date() >= date.today():
+            suggestions.append({
+                "title": f"开庭提醒 - {case.case_number}",
+                "schedule_type": "hearing",
+                "start_time": case.trial_date.isoformat(),
+                "end_time": (case.trial_date + timedelta(hours=3)).isoformat(),
+                "reminder_setting": "3d",
+                "source_deadline": "开庭提醒",
+                "notes": f"开庭日期 {case.trial_date.strftime('%Y-%m-%d')}，提前3天提醒",
+                "is_all_day": 0,
+            })
+
+    return {"case_id": case_id, "suggestions": suggestions}
+
+
+@router.post("/batch")
+def batch_create_schedules(
+    data: List[ScheduleCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """批量创建日程"""
+    created = []
+    for item in data:
+        start_dt = _parse_dt(item.start_time)
+        end_dt = _parse_dt(item.end_time)
+        if start_dt >= end_dt:
+            end_dt = start_dt + timedelta(hours=1)  # 全天事件默认1小时
+
+        schedule = Schedule(
+            title=item.title,
+            schedule_type=item.schedule_type,
+            case_id=item.case_id if item.case_id and item.case_id > 0 else None,
+            start_time=start_dt,
+            end_time=end_dt,
+            location=item.location,
+            judge=item.judge,
+            notes=item.notes,
+            is_parsed_from_sms=item.is_parsed_from_sms,
+            is_all_day=item.is_all_day,
+            reminder_setting=item.reminder_setting,
+            color=item.color,
+            source_deadline=item.source_deadline,
+        )
+        db.add(schedule)
+        db.flush()
+        created.append(_schedule_to_dict(schedule))
+
+    db.commit()
+    return {"message": f"成功创建 {len(created)} 条日程", "items": created}
 
 
 @router.get("/conflicts")
@@ -152,42 +286,74 @@ def get_reminders(
 ):
     """获取当前需要提醒的日程
 
-    规则：
-    - 开庭前 3 天、1 天、2 小时需要提醒
-    - 其他类型日程：开始前 1 天、1 小时提醒
+    使用日程自身的 reminder_setting 字段判断：
+    - none: 不提醒
+    - day0: 当天提醒
+    - 1d: 提前1天
+    - 3d: 提前3天
+    - 7d: 提前7天
+    临近提醒（2小时/1小时）自动附加
     """
     now = datetime.now()
-    # 查询从现在到未来 4 天内的所有日程
-    future = now + timedelta(days=4)
+    # 查询从现在到未来 8 天内的所有日程
+    future = now + timedelta(days=8)
     schedules = db.query(Schedule).filter(
         Schedule.start_time >= now,
         Schedule.start_time <= future,
     ).order_by(Schedule.start_time.asc()).all()
 
+    REMINDER_THRESHOLDS = {
+        "day0": 0,
+        "1d": 24,
+        "3d": 72,
+        "7d": 168,
+    }
+
     reminders = []
     for s in schedules:
+        setting = s.reminder_setting or "3d"
+        if setting == "none":
+            continue
+
         time_until = s.start_time - now
         hours_until = time_until.total_seconds() / 3600
 
         due_reminders = []
 
-        if s.schedule_type == "hearing":
-            # 开庭：3 天、1 天、2 小时
-            for label, threshold, key in [
-                ("距开庭还有 3 天", 72, "hearing_3d"),
-                ("距开庭还有 1 天", 24, "hearing_1d"),
-                ("距开庭还有 2 小时", 2, "hearing_2h"),
-            ]:
-                if 0 < hours_until <= threshold and hours_until > threshold * 0.8:
-                    due_reminders.append({"key": key, "label": label, "hours_remaining": round(hours_until, 1)})
+        # 主提醒：根据 reminder_setting
+        if setting in REMINDER_THRESHOLDS:
+            threshold = REMINDER_THRESHOLDS[setting]
+            if threshold == 0:
+                # 当天：24小时内且未过期
+                if 0 < hours_until <= 24:
+                    due_reminders.append({
+                        "key": "day0",
+                        "label": "今日日程",
+                        "hours_remaining": round(hours_until, 1),
+                    })
+            elif 0 < hours_until <= threshold and hours_until > threshold * 0.75:
+                label_map = {"1d": "1 天", "3d": "3 天", "7d": "7 天"}
+                due_reminders.append({
+                    "key": setting,
+                    "label": f"距日程还有 {label_map.get(setting, setting)}",
+                    "hours_remaining": round(hours_until, 1),
+                })
+
+        # 临近提醒：开庭前2小时，其他1小时
+        if s.schedule_type in ("hearing", "evidence_deadline", "appeal_deadline"):
+            if 0 < hours_until <= 2:
+                due_reminders.append({
+                    "key": "urgent_2h",
+                    "label": "距日程还有 2 小时",
+                    "hours_remaining": round(hours_until, 1),
+                })
         else:
-            # 其他：1 天、1 小时
-            for label, threshold, key in [
-                ("日程即将开始（1 天内）", 24, "general_1d"),
-                ("日程即将开始（1 小时内）", 1, "general_1h"),
-            ]:
-                if 0 < hours_until <= threshold and hours_until > threshold * 0.8:
-                    due_reminders.append({"key": key, "label": label, "hours_remaining": round(hours_until, 1)})
+            if 0 < hours_until <= 1:
+                due_reminders.append({
+                    "key": "urgent_1h",
+                    "label": "日程即将开始（1 小时内）",
+                    "hours_remaining": round(hours_until, 1),
+                })
 
         if due_reminders:
             reminders.append({
@@ -268,7 +434,7 @@ def get_schedule(
     return _schedule_to_dict(s)
 
 
-@router.post("/")
+@router.post("")
 def create_schedule(
     data: ScheduleCreate,
     db: Session = Depends(get_db),
@@ -278,8 +444,11 @@ def create_schedule(
     start_dt = _parse_dt(data.start_time)
     end_dt = _parse_dt(data.end_time)
 
-    if start_dt >= end_dt:
+    # 全天事件允许 start == end；非全天事件必须 end > start
+    if not data.is_all_day and start_dt >= end_dt:
         raise HTTPException(status_code=400, detail="结束时间必须晚于开始时间")
+    if data.is_all_day and start_dt >= end_dt:
+        end_dt = start_dt + timedelta(hours=1)  # 全天事件默认持续1小时
 
     # 冲突检测
     conflicts = _check_conflict(db, start_dt, end_dt)
@@ -294,6 +463,10 @@ def create_schedule(
         judge=data.judge,
         notes=data.notes,
         is_parsed_from_sms=data.is_parsed_from_sms,
+        is_all_day=data.is_all_day,
+        reminder_setting=data.reminder_setting,
+        color=data.color,
+        source_deadline=data.source_deadline,
     )
     db.add(schedule)
     db.commit()
@@ -328,14 +501,19 @@ def update_schedule(
 
     check_start = update_data.get("start_time", s.start_time)
     check_end = update_data.get("end_time", s.end_time)
+    is_all_day = update_data.get("is_all_day", s.is_all_day if s.is_all_day else 0)
 
     if isinstance(check_start, str):
         check_start = _parse_dt(check_start)
     if isinstance(check_end, str):
         check_end = _parse_dt(check_end)
 
-    if check_start >= check_end:
+    # 全天事件允许 start == end
+    if not is_all_day and check_start >= check_end:
         raise HTTPException(status_code=400, detail="结束时间必须晚于开始时间")
+    if is_all_day and check_start >= check_end:
+        check_end = check_start + timedelta(hours=1)
+        update_data["end_time"] = check_end
 
     conflicts = _check_conflict(db, check_start, check_end, exclude_id=schedule_id)
 

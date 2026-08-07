@@ -52,7 +52,7 @@ VALID_ROLES = list(ROLE_LABELS.keys())
 
 # ---------- Routes ----------
 
-@router.get("/")
+@router.get("")
 def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -77,7 +77,7 @@ def get_me(
     return _user_to_dict(current_user)
 
 
-@router.post("/")
+@router.post("")
 def create_user(
     data: UserCreate,
     db: Session = Depends(get_db),

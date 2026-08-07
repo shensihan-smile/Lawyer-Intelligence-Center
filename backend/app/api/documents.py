@@ -8,6 +8,7 @@ import io
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from typing import Optional
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -18,6 +19,39 @@ from app.services.document_converter import pdf_to_word, word_to_pdf
 from app.services.document_imager import document_to_images
 
 router = APIRouter()
+
+
+# ---------- Pydantic schemas ----------
+
+class DocumentUpdate(BaseModel):
+    original_name: Optional[str] = None
+    doc_category: Optional[str] = None
+    case_id: Optional[int] = None
+    client_id: Optional[int] = None
+    version: Optional[str] = None
+    author: Optional[str] = None
+    notes: Optional[str] = None
+    is_draft: Optional[int] = None
+    template_id: Optional[int] = None
+    editor_content: Optional[str] = None
+
+
+class DocumentCreate(BaseModel):
+    """纯文本草稿创建（无文件上传）"""
+    original_name: str
+    doc_category: str = "other"
+    case_id: Optional[int] = None
+    client_id: Optional[int] = None
+    notes: str = ""
+    is_draft: int = 1
+    template_id: Optional[int] = None
+    editor_content: str = ""
+
+
+class ExportRequest(BaseModel):
+    format: str  # "docx" 或 "pdf"
+    html: str    # Quill HTML 内容
+    title: str = "文档"
 
 
 # ---------- Helpers ----------
@@ -38,6 +72,9 @@ def _doc_to_dict(doc: Document) -> dict:
         "version": doc.version,
         "author": doc.author,
         "notes": doc.notes,
+        "is_draft": doc.is_draft or 0,
+        "template_id": doc.template_id,
+        "editor_content": doc.editor_content or "",
         "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
     }
 
@@ -54,7 +91,7 @@ def _format_size(size_bytes: int) -> str:
 
 # ---------- Routes ----------
 
-@router.get("/")
+@router.get("")
 def list_documents(
     search: str = Query("", description="搜索文件名"),
     case_id: Optional[int] = Query(None),
@@ -173,27 +210,51 @@ def download_document(
 @router.put("/{doc_id}")
 def update_document(
     doc_id: int,
-    doc_category: Optional[str] = Form(None),
-    case_id: Optional[int] = Form(None),
-    client_id: Optional[int] = Form(None),
-    notes: Optional[str] = Form(None),
+    data: DocumentUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """更新文档元数据（分类、关联案件、关联客户）"""
+    """更新文档元数据（JSON body）"""
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="文档不存在")
 
-    if doc_category is not None:
-        doc.doc_category = doc_category
-    if case_id is not None:
-        doc.case_id = case_id if case_id > 0 else None
-    if client_id is not None:
-        doc.client_id = client_id if client_id > 0 else None
-    if notes is not None:
-        doc.notes = notes
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if key == "case_id":
+            setattr(doc, key, value if value and value > 0 else None)
+        else:
+            setattr(doc, key, value)
 
+    db.commit()
+    db.refresh(doc)
+    return _doc_to_dict(doc)
+
+
+@router.post("")
+def create_document(
+    data: DocumentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """创建纯文本文档/草稿（无文件上传）"""
+    doc = Document(
+        filename=f"draft_{uuid.uuid4().hex[:8]}",
+        original_name=data.original_name,
+        file_path="",  # 草稿无物理文件，用空字符串替代NULL（兼容旧表NOT NULL约束）
+        file_size=0,
+        file_type="",
+        doc_category=data.doc_category,
+        case_id=data.case_id if data.case_id and data.case_id > 0 else None,
+        client_id=data.client_id if data.client_id and data.client_id > 0 else None,
+        version=1,
+        author=current_user.real_name or current_user.username,
+        notes=data.notes,
+        is_draft=data.is_draft,
+        template_id=data.template_id if data.template_id and data.template_id > 0 else None,
+        editor_content=data.editor_content,
+    )
+    db.add(doc)
     db.commit()
     db.refresh(doc)
     return _doc_to_dict(doc)
@@ -210,8 +271,8 @@ def delete_document(
     if not doc:
         raise HTTPException(status_code=404, detail="文档不存在")
 
-    # 删除物理文件
-    if os.path.exists(doc.file_path):
+    # 删除物理文件（草稿无物理文件）
+    if doc.file_path and os.path.exists(doc.file_path):
         try:
             os.remove(doc.file_path)
         except OSError:
@@ -429,3 +490,112 @@ def preview_document(
         )
 
     raise HTTPException(status_code=400, detail=f"不支持的文件格式: {file_type}")
+
+
+# ==================== 文档导出（草稿→Word/PDF） ====================
+
+@router.post("/export")
+def export_document(
+    data: ExportRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """将 Quill HTML 导出为 Word 或 PDF"""
+    if data.format not in ("docx", "pdf"):
+        raise HTTPException(status_code=400, detail="格式只支持 docx 或 pdf")
+
+    try:
+        from docx import Document as DocxDocument
+        from docx.shared import Pt, Cm, Inches, RGBColor
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.ns import qn
+        from bs4 import BeautifulSoup
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"缺少依赖库: {e}")
+
+    tmp_dir = os.path.join(settings.UPLOAD_DIR, "temp")
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    doc = DocxDocument()
+    # 设置默认字体
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'SimSun'
+    font.size = Pt(12)
+    style.element.rPr.rFonts.set(qn('w:eastAsia'), 'SimSun')
+
+    # 解析 HTML
+    soup = BeautifulSoup(data.html, 'html.parser')
+
+    # 标签映射
+    for element in soup.find_all(['h1', 'h2', 'h3', 'p', 'ol', 'ul', 'table', 'blockquote']):
+        if element.name == 'h1':
+            p = doc.add_heading(element.get_text(strip=True), level=1)
+        elif element.name == 'h2':
+            p = doc.add_heading(element.get_text(strip=True), level=2)
+        elif element.name == 'h3':
+            p = doc.add_heading(element.get_text(strip=True), level=3)
+        elif element.name == 'p':
+            p = doc.add_paragraph()
+            style_attr = element.get('style', '')
+            if 'text-align:right' in style_attr or 'text-align: right' in style_attr:
+                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            elif 'text-align:center' in style_attr:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # 处理行内元素
+            for child in element.children:
+                if child.name == 'strong' or child.name == 'b':
+                    run = p.add_run(child.get_text())
+                    run.bold = True
+                elif child.name == 'em' or child.name == 'i':
+                    run = p.add_run(child.get_text())
+                    run.italic = True
+                elif child.name == 'u':
+                    run = p.add_run(child.get_text())
+                    run.underline = True
+                elif child.string:
+                    p.add_run(str(child.string))
+        elif element.name in ('ol', 'ul'):
+            items = element.find_all('li')
+            for li in items:
+                p = doc.add_paragraph(li.get_text(strip=True), style='List Bullet' if element.name == 'ul' else 'List Number')
+        elif element.name == 'blockquote':
+            p = doc.add_paragraph(element.get_text(strip=True))
+            p.paragraph_format.left_indent = Cm(1)
+            for run in p.runs:
+                run.italic = True
+        elif element.name == 'table':
+            rows = element.find_all('tr')
+            if rows:
+                cols = len(rows[0].find_all(['td', 'th']))
+                table = doc.add_table(rows=len(rows), cols=max(cols, 1))
+                table.style = 'Table Grid'
+                for i, tr in enumerate(rows):
+                    cells = tr.find_all(['td', 'th'])
+                    for j, cell in enumerate(cells):
+                        if j < cols:
+                            table.cell(i, j).text = cell.get_text(strip=True)
+
+    # 保存 docx
+    docx_path = os.path.join(tmp_dir, f"export_{uuid.uuid4().hex[:8]}.docx")
+    doc.save(docx_path)
+
+    if data.format == "docx":
+        safe_title = data.title.replace("/", "_").replace("\\", "_")
+        return FileResponse(
+            path=docx_path,
+            filename=f"{safe_title}.docx",
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    else:
+        # DOCX → PDF
+        pdf_path = word_to_pdf(docx_path, tmp_dir)
+        safe_title = data.title.replace("/", "_").replace("\\", "_")
+        if pdf_path and os.path.exists(pdf_path):
+            return FileResponse(
+                path=pdf_path,
+                filename=f"{safe_title}.pdf",
+                media_type="application/pdf",
+            )
+        else:
+            raise HTTPException(status_code=500, detail="PDF 转换失败，请确认系统已安装 Word 或 LibreOffice")

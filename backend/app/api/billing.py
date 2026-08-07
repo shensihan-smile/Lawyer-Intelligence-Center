@@ -97,8 +97,15 @@ def _bill_to_dict(b: Bill) -> dict:
         "billing_period_start": b.billing_period_start.isoformat() if b.billing_period_start else None,
         "billing_period_end": b.billing_period_end.isoformat() if b.billing_period_end else None,
         "total_amount": b.total_amount,
+        "amount_paid": b.amount_paid or 0,
+        "paid_date": b.paid_date.isoformat() if b.paid_date else None,
         "status": b.status,
         "notes": b.notes,
+        "firm_name": b.firm_name or "",
+        "firm_address": b.firm_address or "",
+        "firm_phone": b.firm_phone or "",
+        "lawyer_name": b.lawyer_name or "",
+        "bank_info": b.bank_info or "",
         "generated_at": b.generated_at.isoformat() if b.generated_at else None,
         "exported_at": b.exported_at.isoformat() if b.exported_at else None,
         "items": [
@@ -111,6 +118,7 @@ def _bill_to_dict(b: Bill) -> dict:
                 "unit_price": i.unit_price,
                 "quantity": i.quantity,
                 "amount": i.amount,
+                "item_type": i.item_type or "legal_fee",
             }
             for i in (b.items or [])
         ],
@@ -455,6 +463,11 @@ def generate_bill(
         total_amount=total,
         status="generated",
         notes=data.notes or f"{data.firm_name or ''} - 账单",
+        firm_name=data.firm_name or "",
+        firm_address=data.firm_address or "",
+        firm_phone=data.firm_phone or "",
+        lawyer_name=data.lawyer_name or "",
+        bank_info=data.bank_info or "",
     )
     db.add(bill)
     db.flush()
@@ -572,6 +585,11 @@ def batch_generate_bills(
                 total_amount=total,
                 status="generated",
                 notes=data.notes or f"周期出账 {data.period_start} ~ {data.period_end}",
+                firm_name=data.firm_name or "",
+                firm_address=data.firm_address or "",
+                firm_phone=data.firm_phone or "",
+                lawyer_name=data.lawyer_name or "",
+                bank_info=data.bank_info or "",
             )
             db.add(bill)
             db.flush()
@@ -649,7 +667,7 @@ def export_bill_pdf(
 
     client = db.query(Client).filter(Client.id == bill.client_id).first()
 
-    # 构建 PDF 数据
+    # 构建 PDF 数据：优先用 Bill 存储的，其次用查询参数
     pdf_data = {
         "bill_number": bill.bill_number,
         "client_name": client.name if client else "",
@@ -659,12 +677,12 @@ def export_bill_pdf(
         "items": [],
         "total_amount": f"{bill.total_amount:,.2f}",
         "total_cn": amount_to_chinese(bill.total_amount),
-        "firm_name": firm_name or "律师事务所",
-        "firm_address": firm_address or "",
-        "firm_phone": firm_phone or "",
-        "lawyer_name": lawyer_name or "",
-        "notes": notes or "",
-        "bank_info": bank_info or "",
+        "firm_name": bill.firm_name or firm_name or "律师事务所",
+        "firm_address": bill.firm_address or firm_address or "",
+        "firm_phone": bill.firm_phone or firm_phone or "",
+        "lawyer_name": bill.lawyer_name or lawyer_name or "",
+        "notes": notes or bill.notes or "",
+        "bank_info": bill.bank_info or bank_info or "",
     }
 
     method_labels = {"hourly": "按小时", "fixed": "按件", "percentage": "按比例"}
@@ -733,3 +751,148 @@ def delete_bill(
     db.delete(bill)
     db.commit()
     return {"message": "已删除"}
+
+
+# ==================== 收入统计 ====================
+
+@router.get("/revenue-stats")
+def get_revenue_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """收入统计：本月创收、本月回款、未回款总额"""
+    from datetime import date, timedelta
+    from calendar import monthrange
+
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    month_end = date(today.year, today.month, monthrange(today.year, today.month)[1])
+
+    # 本月生成的账单总金额（创收）
+    # 使用 < month_end+1 避免漏掉最后一天有时间的记录
+    month_revenue = db.query(Bill).filter(
+        Bill.generated_at >= month_start,
+        Bill.generated_at < month_end + timedelta(days=1),
+    ).all()
+    month_total = sum(b.total_amount for b in month_revenue)
+
+    # 本月回款
+    month_paid = sum(b.amount_paid or 0 for b in month_revenue)
+
+    # 所有账单未回款总额
+    all_bills = db.query(Bill).all()
+    all_total = sum(b.total_amount for b in all_bills)
+    all_paid = sum(b.amount_paid or 0 for b in all_bills)
+    unpaid_total = all_total - all_paid
+
+    return {
+        "month_revenue": round(month_total, 2),
+        "month_paid": round(month_paid, 2),
+        "unpaid_total": round(unpaid_total, 2),
+        "total_revenue": round(all_total, 2),
+        "total_paid": round(all_paid, 2),
+    }
+
+
+@router.get("/revenue-trend")
+def get_revenue_trend(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """近6个月收入趋势（每月创收 + 回款）"""
+    from datetime import date, timedelta
+    from calendar import monthrange
+
+    today = date.today()
+    trend = []
+
+    for i in range(5, -1, -1):
+        # 计算 i 个月前的月份
+        year = today.year
+        month = today.month - i
+        while month <= 0:
+            month += 12
+            year -= 1
+
+        month_start = date(year, month, 1)
+        month_end = date(year, month, monthrange(year, month)[1])
+
+        bills = db.query(Bill).filter(
+            Bill.generated_at >= month_start,
+            Bill.generated_at < month_end + timedelta(days=1),
+        ).all()
+
+        trend.append({
+            "month": f"{year}-{month:02d}",
+            "label": f"{month}月",
+            "revenue": round(sum(b.total_amount for b in bills), 2),
+            "paid": round(sum(b.amount_paid or 0 for b in bills), 2),
+        })
+
+    return {"trend": trend}
+
+
+@router.get("/case-revenue")
+def get_case_revenue(
+    limit: int = Query(10),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """案件收入排行（按账单明细汇总）"""
+    from sqlalchemy import func as sql_func
+    from app.models.case import Case as CaseModel
+
+    # 按 case_id 汇总 bill_items.amount
+    rows = db.query(
+        BillItem.case_id,
+        sql_func.sum(BillItem.amount).label("total")
+    ).filter(
+        BillItem.case_id.isnot(None)
+    ).group_by(BillItem.case_id).order_by(
+        sql_func.sum(BillItem.amount).desc()
+    ).limit(limit).all()
+
+    result = []
+    for case_id, total in rows:
+        case = db.query(CaseModel).filter(CaseModel.id == case_id).first()
+        result.append({
+            "case_id": case_id,
+            "case_number": case.case_number if case else "",
+            "case_reason": case.case_reason if case else "",
+            "total": round(total, 2),
+        })
+
+    return {"items": result}
+
+
+# ==================== 回款标记 ====================
+
+@router.put("/bills/{bill_id}/pay")
+def mark_bill_paid(
+    bill_id: int,
+    amount_paid: float = Body(..., embed=True),
+    paid_date: str = Body(None, embed=True),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """标记账单回款"""
+    bill = db.query(Bill).filter(Bill.id == bill_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="账单不存在")
+
+    bill.amount_paid = amount_paid
+    if paid_date:
+        try:
+            bill.paid_date = datetime.fromisoformat(paid_date)
+        except (ValueError, TypeError):
+            bill.paid_date = datetime.now()
+    else:
+        bill.paid_date = datetime.now()
+
+    # 如果全额回款，自动更新状态
+    if bill.amount_paid >= bill.total_amount and bill.status != "paid":
+        bill.status = "paid"
+
+    db.commit()
+    db.refresh(bill)
+    return _bill_to_dict(bill)
