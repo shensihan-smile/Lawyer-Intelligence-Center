@@ -54,6 +54,13 @@ class ExportRequest(BaseModel):
     title: str = "文档"
 
 
+class DocumentContentUpdate(BaseModel):
+    editor_content: str
+    original_name: Optional[str] = None
+    doc_category: Optional[str] = None
+    case_id: Optional[int] = None
+
+
 # ---------- Helpers ----------
 
 def _doc_to_dict(doc: Document) -> dict:
@@ -135,6 +142,21 @@ def get_doc_categories():
     ]
 
 
+@router.get("/{doc_id}")
+def get_document(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取单个文档详情（含 editor_content）"""
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文档不存在")
+    result = _doc_to_dict(doc)
+    result["size_display"] = _format_size(doc.file_size)
+    return result
+
+
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -193,11 +215,36 @@ def download_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """下载文档文件"""
+    """下载文档文件
+
+    草稿（is_draft=1）：从 editor_content 即时生成 .docx 并返回
+    已上传文件：返回物理文件
+    """
+    from app.services.document_html import html_to_docx
+
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="文档不存在")
-    if not os.path.exists(doc.file_path):
+
+    # 草稿：从 HTML 内容即时生成 .docx
+    if doc.is_draft:
+        if not doc.editor_content:
+            raise HTTPException(status_code=404, detail="草稿内容为空")
+        tmp_dir = os.path.join(settings.UPLOAD_DIR, "temp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_path = os.path.join(tmp_dir, f"draft_dl_{uuid.uuid4().hex}.docx")
+        if not html_to_docx(doc.editor_content, tmp_path):
+            raise HTTPException(status_code=500, detail="文档生成失败")
+        safe_name = doc.original_name or "文档"
+        if not safe_name.endswith(".docx"):
+            safe_name += ".docx"
+        return FileResponse(
+            path=tmp_path,
+            filename=safe_name,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
+    if not doc.file_path or not os.path.exists(doc.file_path):
         raise HTTPException(status_code=404, detail="文件已被删除或移动")
 
     return FileResponse(
@@ -281,6 +328,129 @@ def delete_document(
     db.delete(doc)
     db.commit()
     return {"message": "文档删除成功"}
+
+
+# ==================== 文档内容读写（在线编辑） ====================
+
+@router.get("/{doc_id}/content")
+def get_document_content(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取文档的可编辑 HTML 内容
+
+    - 草稿（is_draft=1）：直接返回 editor_content
+    - 已上传 Word（docx/docm）：即时转换为 HTML
+    - 旧版 .doc：返回 400 提示转换
+    - 非 Word 文件：返回 400 提示仅支持 Word
+    """
+    from app.services.document_html import docx_to_html
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    # 草稿直接返回已存的 HTML
+    if doc.is_draft:
+        return {
+            "id": doc.id,
+            "original_name": doc.original_name,
+            "is_draft": 1,
+            "file_type": doc.file_type,
+            "case_id": doc.case_id,
+            "doc_category": doc.doc_category,
+            "html": doc.editor_content or "",
+            "case_number": doc.case.case_number if doc.case else None,
+        }
+
+    # 已上传文件 → 检查类型
+    ft = (doc.file_type or "").lower()
+
+    if ft in ("docx", "docm"):
+        if not doc.file_path or not os.path.exists(doc.file_path):
+            raise HTTPException(status_code=404, detail="文件已被删除或移动")
+        try:
+            html = docx_to_html(doc.file_path)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"文档解析失败: {e}")
+        return {
+            "id": doc.id,
+            "original_name": doc.original_name,
+            "is_draft": 0,
+            "file_type": ft,
+            "case_id": doc.case_id,
+            "doc_category": doc.doc_category,
+            "html": html,
+            "case_number": doc.case.case_number if doc.case else None,
+        }
+
+    if ft == "doc":
+        raise HTTPException(
+            status_code=400,
+            detail="旧版 .doc 格式暂不支持在线编辑，请先转换为 .docx",
+        )
+
+    raise HTTPException(
+        status_code=400, detail="仅 Word 文档（.docx/.docm）支持在线编辑"
+    )
+
+
+@router.put("/{doc_id}/content")
+def save_document_content(
+    doc_id: int,
+    data: DocumentContentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """保存文档编辑内容，已上传 Word 自动回写 .docx
+
+    - 草稿（is_draft=1）：只更新 DB 记录
+    - 已上传 Word（is_draft=0）：用 HTML 重建 .docx 并覆盖旧物理文件
+    """
+    from app.services.document_html import html_to_docx
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    # 更新元数据
+    if data.original_name is not None:
+        doc.original_name = data.original_name.strip() or doc.original_name
+    if data.doc_category is not None:
+        doc.doc_category = data.doc_category
+    if data.case_id is not None:
+        doc.case_id = data.case_id if data.case_id > 0 else None
+
+    doc.editor_content = data.editor_content
+
+    # 已上传 Word：用 HTML 重建 .docx
+    ft = (doc.file_type or "").lower()
+    if not doc.is_draft and ft in ("docx", "docm"):
+        new_path = os.path.join(
+            settings.UPLOAD_DIR, f"edit_{uuid.uuid4().hex}.docx"
+        )
+        if not html_to_docx(data.editor_content, new_path):
+            raise HTTPException(status_code=500, detail="文档内容生成失败")
+
+        # 删除旧物理文件
+        old_path = doc.file_path
+        if old_path and old_path != new_path and os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except OSError:
+                pass
+
+        doc.file_path = new_path
+        doc.file_size = os.path.getsize(new_path)
+        doc.version = (doc.version or 1) + 1
+
+    db.commit()
+    db.refresh(doc)
+
+    result = _doc_to_dict(doc)
+    result["size_display"] = _format_size(doc.file_size)
+    return result
 
 
 # ==================== 文档格式转换 ====================
@@ -503,82 +673,14 @@ def export_document(
     if data.format not in ("docx", "pdf"):
         raise HTTPException(status_code=400, detail="格式只支持 docx 或 pdf")
 
-    try:
-        from docx import Document as DocxDocument
-        from docx.shared import Pt, Cm, Inches, RGBColor
-        from docx.enum.text import WD_ALIGN_PARAGRAPH
-        from docx.oxml.ns import qn
-        from bs4 import BeautifulSoup
-    except ImportError as e:
-        raise HTTPException(status_code=500, detail=f"缺少依赖库: {e}")
+    from app.services.document_html import html_to_docx
 
     tmp_dir = os.path.join(settings.UPLOAD_DIR, "temp")
     os.makedirs(tmp_dir, exist_ok=True)
 
-    doc = DocxDocument()
-    # 设置默认字体
-    style = doc.styles['Normal']
-    font = style.font
-    font.name = 'SimSun'
-    font.size = Pt(12)
-    style.element.rPr.rFonts.set(qn('w:eastAsia'), 'SimSun')
-
-    # 解析 HTML
-    soup = BeautifulSoup(data.html, 'html.parser')
-
-    # 标签映射
-    for element in soup.find_all(['h1', 'h2', 'h3', 'p', 'ol', 'ul', 'table', 'blockquote']):
-        if element.name == 'h1':
-            p = doc.add_heading(element.get_text(strip=True), level=1)
-        elif element.name == 'h2':
-            p = doc.add_heading(element.get_text(strip=True), level=2)
-        elif element.name == 'h3':
-            p = doc.add_heading(element.get_text(strip=True), level=3)
-        elif element.name == 'p':
-            p = doc.add_paragraph()
-            style_attr = element.get('style', '')
-            if 'text-align:right' in style_attr or 'text-align: right' in style_attr:
-                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            elif 'text-align:center' in style_attr:
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-            # 处理行内元素
-            for child in element.children:
-                if child.name == 'strong' or child.name == 'b':
-                    run = p.add_run(child.get_text())
-                    run.bold = True
-                elif child.name == 'em' or child.name == 'i':
-                    run = p.add_run(child.get_text())
-                    run.italic = True
-                elif child.name == 'u':
-                    run = p.add_run(child.get_text())
-                    run.underline = True
-                elif child.string:
-                    p.add_run(str(child.string))
-        elif element.name in ('ol', 'ul'):
-            items = element.find_all('li')
-            for li in items:
-                p = doc.add_paragraph(li.get_text(strip=True), style='List Bullet' if element.name == 'ul' else 'List Number')
-        elif element.name == 'blockquote':
-            p = doc.add_paragraph(element.get_text(strip=True))
-            p.paragraph_format.left_indent = Cm(1)
-            for run in p.runs:
-                run.italic = True
-        elif element.name == 'table':
-            rows = element.find_all('tr')
-            if rows:
-                cols = len(rows[0].find_all(['td', 'th']))
-                table = doc.add_table(rows=len(rows), cols=max(cols, 1))
-                table.style = 'Table Grid'
-                for i, tr in enumerate(rows):
-                    cells = tr.find_all(['td', 'th'])
-                    for j, cell in enumerate(cells):
-                        if j < cols:
-                            table.cell(i, j).text = cell.get_text(strip=True)
-
-    # 保存 docx
     docx_path = os.path.join(tmp_dir, f"export_{uuid.uuid4().hex[:8]}.docx")
-    doc.save(docx_path)
+    if not html_to_docx(data.html, docx_path):
+        raise HTTPException(status_code=500, detail="文档生成失败")
 
     if data.format == "docx":
         safe_title = data.title.replace("/", "_").replace("\\", "_")

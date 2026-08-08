@@ -38,7 +38,7 @@ def is_available() -> bool:
 
 
 def chat(prompt: str, system_message: str = "", temperature: float = 0.3,
-         max_tokens: int = 2048) -> str:
+         max_tokens: int = 2048, model: str = "") -> str:
     """发送对话请求，返回 AI 回复文本
 
     Args:
@@ -46,6 +46,7 @@ def chat(prompt: str, system_message: str = "", temperature: float = 0.3,
         system_message: 系统提示词（设定 AI 行为）
         temperature: 温度参数（0=最确定，1=最随机）
         max_tokens: 最大输出 token 数（默认 2048）
+        model: 模型名称，为空则使用默认 MODEL
 
     Returns:
         AI 回复内容，失败返回空字符串
@@ -61,7 +62,7 @@ def chat(prompt: str, system_message: str = "", temperature: float = 0.3,
 
     try:
         response = client.chat.completions.create(
-            model=MODEL,
+            model=model or MODEL,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -72,8 +73,68 @@ def chat(prompt: str, system_message: str = "", temperature: float = 0.3,
         return ""
 
 
+def chat_multi(messages: list, temperature: float = 0.3,
+               max_tokens: int = 4096, model: str = "") -> str:
+    """多轮对话请求（messages 已包含 system prompt）
+
+    Args:
+        messages: [{role, content}, ...] 格式的消息列表
+        temperature: 温度参数
+        max_tokens: 最大输出 token 数
+        model: 模型名称，为空则使用默认 MODEL
+
+    Returns:
+        AI 回复内容，失败返回空字符串
+    """
+    client = _get_client()
+    if not client:
+        return ""
+
+    try:
+        response = client.chat.completions.create(
+            model=model or MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return response.choices[0].message.content or ""
+    except Exception as e:
+        print(f"[AI] 调用失败: {e}")
+        return ""
+
+
+def chat_stream(messages: list, temperature: float = 0.3,
+                max_tokens: int = 4096, model: str = ""):
+    """流式对话请求，逐块返回 AI 回复文本
+
+    Args:
+        messages: [{role, content}, ...] 格式的消息列表（含 system prompt）
+        temperature: 温度参数
+        max_tokens: 最大输出 token 数
+        model: 模型名称，为空则使用默认 MODEL
+
+    Yields:
+        文本增量；失败时抛出异常（由调用者处理）
+    """
+    client = _get_client()
+    if not client:
+        raise RuntimeError("AI 客户端未初始化，请检查 OPENAI_API_KEY 配置")
+
+    stream = client.chat.completions.create(
+        model=model or MODEL,
+        messages=messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta
+        if delta and delta.content:
+            yield delta.content
+
+
 def chat_json(prompt: str, system_message: str = "",
-              temperature: float = 0.1) -> dict:
+              temperature: float = 0.1, model: str = "") -> dict:
     """发送对话请求，从回复中提取 JSON 对象
 
     用于需要结构化输出的场景（如信息提取）。
@@ -83,12 +144,13 @@ def chat_json(prompt: str, system_message: str = "",
         prompt: 用户消息
         system_message: 系统提示词
         temperature: 温度参数（提取类任务建议 0.1）
+        model: 模型名称，为空则使用默认 MODEL
 
     Returns:
         解析后的 dict，失败返回空 dict {}
     """
     response = chat(prompt, system_message=system_message,
-                    temperature=temperature, max_tokens=2048)
+                    temperature=temperature, max_tokens=2048, model=model)
 
     if not response:
         return {}

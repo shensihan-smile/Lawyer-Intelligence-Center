@@ -1,4 +1,9 @@
-"""前端页面路由 — 使用 Jinja2 模板渲染"""
+"""前端页面路由 — 使用 Jinja2 模板渲染
+
+所有未匹配的路径都会返回 index.html（SPA 兜底），
+让前端 JS 接管路由，确保刷新不 404。
+"""
+
 import os
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -62,3 +67,14 @@ async def page_messages(request: Request):
 @router.get("/system", response_class=HTMLResponse)
 async def page_system(request: Request):
     return _render("system", request)
+
+
+# ---- SPA 兜底路由：所有未匹配路径返回 index.html ----
+# 必须放在最后，确保上面的具名路由优先匹配。
+# API 路由（/api/*）和静态文件（/static/*）在 main.py 中
+# 先于本 router 注册，不会被此路由拦截。
+
+@router.get("/{path:path}", response_class=HTMLResponse)
+async def spa_fallback(request: Request, path: str):
+    """SPA 兜底：未知路径一律返回 index.html，由前端 JS 接管路由"""
+    return _render("dashboard", request)

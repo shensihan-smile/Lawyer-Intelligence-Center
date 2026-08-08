@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, users, cases, clients, documents, schedules, billing, dockets, lightweight, local_cases, preservations, retainer, dashboard
+from app.api import auth, users, cases, clients, documents, schedules, billing, dockets, lightweight, local_cases, preservations, retainer, dashboard, ai_assistant
 from app.models.docket import DocketRecord  # 确保表被创建
 from app.models.lightweight import StoredMessage, StoredTask, StoredTimeRecord, StoredBillingConfig, StoredBill
 from app.models.local_case import LocalCase  # 本地判例库
@@ -54,12 +54,19 @@ app.include_router(local_cases.router, prefix="/api/local-cases", tags=["本地�
 app.include_router(preservations.router, prefix="/api/preservations", tags=["保全管理"])
 app.include_router(retainer.router, prefix="/api/retainer", tags=["常法客户"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["仪表盘"])
+app.include_router(ai_assistant.router, prefix="/api/ai", tags=["AI助手"])
 
 # 延迟导入 templates（避免循环引用）
 from app.api.templates import router as templates_router
 app.include_router(templates_router, prefix="/api/templates", tags=["模板管理"])
 
-# 前端页面路由（如果模板存在则加载）
+@app.get("/api/health")
+def health_check():
+    """健康检查接口"""
+    return {"status": "ok", "version": "1.0.0"}
+
+
+# 前端页面路由（必须在所有 API 路由之后注册，否则兜底路由会拦截 API 请求）
 try:
     from app.routes_pages import router as pages_router
     from fastapi.staticfiles import StaticFiles
@@ -69,9 +76,3 @@ try:
     app.include_router(pages_router)
 except ImportError:
     pass  # 纯 API 模式，不加载页面
-
-
-@app.get("/api/health")
-def health_check():
-    """健康检查接口"""
-    return {"status": "ok", "version": "1.0.0"}
