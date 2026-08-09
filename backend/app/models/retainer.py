@@ -49,6 +49,8 @@ class WorkRecord(Base):
     hours = Column(Float, default=0, comment="服务时长（小时）")
     participants = Column(String(200), default="", comment="参与人员")
     reference_number = Column(String(100), default="", comment="关联事项编号")
+    is_billed = Column(Integer, default=0, comment="是否已纳入计费")
+    bill_item_id = Column(Integer, nullable=True, comment="关联账单明细项ID")
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

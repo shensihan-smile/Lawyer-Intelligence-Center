@@ -1,4 +1,5 @@
 """财务管理 API"""
+import json
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -14,6 +15,7 @@ from app.models.user import User
 from app.models.billing import BillingConfig, Bill, BillItem, TimeRecord
 from app.models.case import Case
 from app.models.client import Client
+from app.models.retainer import WorkRecord
 from app.services.billing_engine import (
     get_case_billing_rate, calculate_record_amount,
     generate_bill_items,
@@ -482,6 +484,7 @@ def generate_bill(
             unit_price=item_data["unit_price"],
             quantity=item_data["quantity"],
             amount=item_data["amount"],
+            work_record_ids=item_data.get("work_record_ids", ""),
         )
         db.add(item)
 
@@ -491,6 +494,19 @@ def generate_bill(
             if tr:
                 tr.is_billed = True
                 tr.bill_item_id = item.id
+
+        # 标记关联的常法工作记录
+        wr_ids_str = item_data.get("work_record_ids", "")
+        if wr_ids_str:
+            try:
+                wr_ids = json.loads(wr_ids_str)
+                for wr_id in wr_ids:
+                    wr = db.query(WorkRecord).filter(WorkRecord.id == wr_id).first()
+                    if wr:
+                        wr.is_billed = 1
+                        wr.bill_item_id = item.id
+            except (json.JSONDecodeError, TypeError):
+                pass
 
     db.commit()
     db.refresh(bill)
@@ -603,6 +619,7 @@ def batch_generate_bills(
                     unit_price=item_data["unit_price"],
                     quantity=item_data["quantity"],
                     amount=item_data["amount"],
+                    work_record_ids=item_data.get("work_record_ids", ""),
                 )
                 db.add(item)
 
@@ -611,6 +628,19 @@ def batch_generate_bills(
                     if tr:
                         tr.is_billed = True
                         tr.bill_item_id = item.id
+
+                # 标记关联的常法工作记录
+                wr_ids_str = item_data.get("work_record_ids", "")
+                if wr_ids_str:
+                    try:
+                        wr_ids = json.loads(wr_ids_str)
+                        for wr_id in wr_ids:
+                            wr = db.query(WorkRecord).filter(WorkRecord.id == wr_id).first()
+                            if wr:
+                                wr.is_billed = 1
+                                wr.bill_item_id = item.id
+                    except (json.JSONDecodeError, TypeError):
+                        pass
 
             db.flush()
             generated_bills.append(bill)
@@ -748,6 +778,17 @@ def delete_bill(
         db.query(TimeRecord).filter(TimeRecord.bill_item_id == item.id).update(
             {"is_billed": False, "bill_item_id": None}
         )
+        # 取消关联的常法工作记录计费标记
+        if item.work_record_ids:
+            try:
+                wr_ids = json.loads(item.work_record_ids)
+                for wr_id in wr_ids:
+                    wr = db.query(WorkRecord).filter(WorkRecord.id == wr_id).first()
+                    if wr:
+                        wr.is_billed = 0
+                        wr.bill_item_id = None
+            except (json.JSONDecodeError, TypeError):
+                pass
     db.delete(bill)
     db.commit()
     return {"message": "已删除"}

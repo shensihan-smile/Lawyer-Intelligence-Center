@@ -6,13 +6,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, users, cases, clients, documents, schedules, billing, dockets, lightweight, local_cases, preservations, retainer, dashboard, ai_assistant
+from app.api import auth, users, cases, clients, documents, schedules, billing, dockets, lightweight, local_cases, preservations, retainer, dashboard, ai_assistant, settings, search
 from app.models.docket import DocketRecord  # 确保表被创建
 from app.models.lightweight import StoredMessage, StoredTask, StoredTimeRecord, StoredBillingConfig, StoredBill
 from app.models.local_case import LocalCase  # 本地判例库
 from app.models.preservation import PreservationRecord, PreservationRenewal  # 保全记录
 from app.models.communication import CommunicationRecord  # 沟通记录
 from app.models.template import Template  # 文档模板
+from app.models.settings import FirmSettings  # 律所设置
 from app.models.retainer import RetainerClient, WorkRecord, PaymentRecord, RetainerReport  # 常法客户
 
 # 创建数据库表
@@ -55,6 +56,12 @@ app.include_router(preservations.router, prefix="/api/preservations", tags=["保
 app.include_router(retainer.router, prefix="/api/retainer", tags=["常法客户"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["仪表盘"])
 app.include_router(ai_assistant.router, prefix="/api/ai", tags=["AI助手"])
+
+# 设置
+app.include_router(settings.router, prefix="/api/settings", tags=["设置"])
+
+# 全局搜索
+app.include_router(search.router, prefix="/api/search", tags=["全局搜索"])
 
 # 延迟导入 templates（避免循环引用）
 from app.api.templates import router as templates_router

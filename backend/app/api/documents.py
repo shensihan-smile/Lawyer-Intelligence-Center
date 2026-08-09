@@ -133,7 +133,8 @@ def get_doc_categories():
     """获取文档分类列表"""
     return [
         {"value": "legal_opinion", "label": "法律意见书"},
-        {"value": "contract_draft", "label": "合同草案"},
+        {"value": "contract_draft", "label": "合同草稿"},
+        {"value": "retainer_service", "label": "常法顾问"},
         {"value": "complaint", "label": "起诉状"},
         {"value": "defense", "label": "答辩状"},
         {"value": "proxy_statement", "label": "代理词"},

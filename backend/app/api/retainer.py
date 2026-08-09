@@ -406,6 +406,28 @@ def create_retainer_client(
     return _retainer_to_dict(r)
 
 
+
+@router.get("/by-client")
+def get_retainer_by_client(
+    client_id: int = Query(...),
+    db: Session = Depends(get_db),
+):
+    """根据关联客户 ID 查询常法客户（用于案件详情常法标识）"""
+    retainers = db.query(RetainerClient).filter(
+        RetainerClient.client_id == client_id,
+        RetainerClient.deleted == False,
+    ).all()
+    return [
+        {
+            "id": r.id, "client_name": r.client_name,
+            "service_end_date": r.service_end_date.isoformat() if r.service_end_date else None,
+            "status": _compute_status(r.service_end_date),
+            "contract_number": r.contract_number,
+        }
+        for r in retainers
+    ]
+
+
 @router.get("/clients/{retainer_id}")
 def get_retainer_client(retainer_id: int, db: Session = Depends(get_db)):
     """获取常法客户详情"""

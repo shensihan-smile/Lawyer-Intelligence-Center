@@ -61,6 +61,7 @@ class BillItem(Base):
     quantity = Column(Float, default=1)
     amount = Column(Float, default=0)
     item_type = Column(String(20), default="legal_fee")  # legal_fee/travel/court/other
+    work_record_ids = Column(Text, default="")  # JSON数组，关联常法工作记录ID
 
     # ORM 关系
     bill = relationship("Bill", back_populates="items")

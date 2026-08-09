@@ -107,6 +107,7 @@ def ensure_columns():
         existing_sched = _get_existing("schedules")
         existing_bills = _get_existing("bills")
         existing_bill_items = _get_existing("bill_items")
+        existing_retainer_wr = _get_existing("retainer_work_records")
 
         # 所有迁移：(表名, 字段名, 类型定义, 已有字段集)
         all_migrations = [
@@ -134,6 +135,10 @@ def ensure_columns():
             ("bills", "paid_date", "DATETIME", existing_bills),
             # bill_items 表
             ("bill_items", "item_type", "VARCHAR(20) DEFAULT 'legal_fee'", existing_bill_items),
+            ("bill_items", "work_record_ids", "TEXT DEFAULT ''", existing_bill_items),
+            # retainer_work_records 表
+            ("retainer_work_records", "is_billed", "INTEGER DEFAULT 0", existing_retainer_wr),
+            ("retainer_work_records", "bill_item_id", "INTEGER", existing_retainer_wr),
         ]
 
         for table, col, typedef, target in all_migrations:

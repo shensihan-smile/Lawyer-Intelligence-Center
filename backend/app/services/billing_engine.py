@@ -1,8 +1,11 @@
 """计费引擎：根据计费配置和工时记录计算费用"""
+import json
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models.billing import BillingConfig, TimeRecord, BillItem
 from app.models.case import Case
+from app.models.retainer import RetainerClient, WorkRecord
+from app.models.settings import FirmSettings
 
 
 def get_case_billing_rate(case: Case | None, db: Session) -> dict:
@@ -144,6 +147,70 @@ def generate_bill_items(
             "quantity": round(total_minutes / 60.0, 1),
             "amount": round(total_amount, 2),
             "time_record_ids": [r.id for r in group_records],
+            "work_record_ids": "",
         })
+
+    # 常法工时纳入计费：当开关打开时，聚合客户的常法工作记录
+    firm_settings = db.query(FirmSettings).filter(FirmSettings.id == 1).first()
+    if firm_settings and firm_settings.retainer_in_billing:
+        # 获取全局默认费率
+        global_rate = 2000.0
+        default_config = db.query(BillingConfig).filter(
+            BillingConfig.is_default == True
+        ).first()
+        if default_config:
+            global_rate = default_config.unit_price
+
+        # 查找该客户关联的常法合同
+        retainer_clients = db.query(RetainerClient).filter(
+            RetainerClient.client_id == client_id,
+            RetainerClient.deleted == False,
+        ).all()
+
+        if retainer_clients:
+            retainer_ids = [r.id for r in retainer_clients]
+            wr_records = db.query(WorkRecord).filter(
+                WorkRecord.retainer_id.in_(retainer_ids),
+                WorkRecord.is_billed == 0,
+                WorkRecord.date >= start_date,
+                WorkRecord.date <= end_date,
+            ).order_by(WorkRecord.retainer_id, WorkRecord.work_type).all()
+
+            if wr_records:
+                WORK_TYPE_LABELS = {
+                    "legal_research": "法律研究",
+                    "drafting": "文书起草",
+                    "hearing": "庭审出庭",
+                    "consultation": "客户咨询",
+                    "contract_review": "合同审查",
+                    "legal_opinion": "法律意见",
+                    "onsite": "驻场服务",
+                    "other": "其他",
+                }
+                # 按 retainer_id + work_type 分组
+                wr_groups: dict[tuple, list[WorkRecord]] = {}
+                for wr in wr_records:
+                    key = (wr.retainer_id, wr.work_type)
+                    wr_groups.setdefault(key, []).append(wr)
+
+                for (rid, wtype), group_records in wr_groups.items():
+                    retainer = db.query(RetainerClient).filter(
+                        RetainerClient.id == rid
+                    ).first()
+                    total_hours = sum(wr.hours or 0 for wr in group_records)
+                    total_amount = round(total_hours * global_rate, 2)
+
+                    rname = retainer.client_name if retainer else f"常法#{rid}"
+                    items.append({
+                        "case_id": None,
+                        "case_number": "",
+                        "description": f"[常法] {rname} - {WORK_TYPE_LABELS.get(wtype, wtype)}",
+                        "billing_method": "hourly",
+                        "unit_price": global_rate,
+                        "quantity": round(total_hours, 1),
+                        "amount": total_amount,
+                        "time_record_ids": [],
+                        "work_record_ids": json.dumps([wr.id for wr in group_records]),
+                    })
 
     return items

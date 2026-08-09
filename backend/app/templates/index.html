@@ -85,7 +85,7 @@ select{cursor:pointer}
 
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-table th{background:var(--light);color:var(--tx2);font-weight:600;padding:9px 10px;text-align:left;white-space:nowrap;border-bottom:2px solid var(--divider)}
+table th{background:#7d8b8f;color:#fff;font-weight:600;padding:9px 10px;text-align:left;white-space:nowrap;border-bottom:2px solid var(--divider)}
 table td{padding:9px 10px;border-bottom:1px solid var(--divider);vertical-align:middle}
 table tbody tr:hover{background:var(--light)}
 
@@ -100,7 +100,7 @@ table tbody tr:hover{background:var(--light)}
 .modal-hd{padding:16px 20px;border-bottom:1px solid var(--divider);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:1}
 .modal-hd h3{font-size:16px}
 .modal-x{width:30px;height:30px;border:none;background:none;font-size:18px;cursor:pointer;color:var(--tx3);border-radius:4px;display:flex;align-items:center;justify-content:center}
-.modal-x:hover{background:var(--light);color:var(--tx)}
+.modal-x:hover{background:var(--light);color:var(--tx)}.modal-x:active{transform:scale(0.92)}
 .modal-bd{padding:20px}
 .modal-ft{padding:14px 20px;border-top:1px solid var(--divider);display:flex;justify-content:flex-end;gap:8px}
 
@@ -369,13 +369,13 @@ table tbody tr:hover{background:var(--light)}
 
 /* 判例导入导出 */
 .lc-export-btn,.lc-import-btn{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.15s}
-.lc-export-btn{background:var(--success);color:#fff}.lc-export-btn:hover{opacity:0.88}
-.lc-import-btn{background:var(--accent);color:#fff}.lc-import-btn:hover{opacity:0.88}
+.lc-export-btn{background:var(--success);color:#fff;transition:all .15s}.lc-export-btn:hover{opacity:0.88}.lc-export-btn:active{transform:scale(0.96)}
+.lc-import-btn{background:var(--accent);color:#fff;transition:all .15s}.lc-import-btn:hover{opacity:0.88}.lc-import-btn:active{transform:scale(0.96)}
 
 /* ---- 客户管理两栏布局 ---- */
 .cl-wrap{display:flex;height:calc(100vh - 130px);gap:16px}
 .cl-side{width:300px;flex-shrink:0;background:var(--card);border:1px solid var(--divider);border-radius:8px;display:flex;flex-direction:column;overflow:hidden}
-.cl-side-hd{padding:12px 14px;border-bottom:1px solid var(--divider);display:flex;gap:8px;align-items:center}
+.cl-side-hd{font-weight:600;font-size:14px;padding:10px 14px;background:#7d8b8f;color:#fff;border-radius:6px 6px 0 0;padding:12px 14px;border-bottom:1px solid var(--divider);display:flex;gap:8px;align-items:center}
 .cl-side-hd input{flex:1;height:32px;border:1px solid var(--divider);border-radius:6px;padding:0 10px;font-size:13px;background:var(--w)}
 .cl-side-list{flex:1;overflow-y:auto;padding:4px 0}
 .cl-item{display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;gap:10px;position:relative}
@@ -415,7 +415,7 @@ table tbody tr:hover{background:var(--light)}
 .doc-filter select{width:100%;margin-bottom:12px}
 .doc-filter .doc-type-tags{display:flex;flex-wrap:wrap;gap:6px}
 .doc-filter .doc-type-tag{padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;border:1px solid var(--divider);background:var(--w);transition:all 0.15s}
-.doc-filter .doc-type-tag.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.doc-filter .doc-type-tag.on{background:#7d8b8f;color:#fff;border-color:#7d8b8f}
 .doc-main{flex:1;overflow-y:auto;background:var(--card);border:1px solid var(--divider);border-radius:8px;display:flex;flex-direction:column}
 .doc-main .tbar{padding:12px 14px;border-bottom:1px solid var(--divider);flex-shrink:0}
 .doc-cards{flex:1;overflow-y:auto;padding:12px 14px}
@@ -433,7 +433,7 @@ table tbody tr:hover{background:var(--light)}
 /* ---- 模板中心 ---- */
 .tpl-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 .tpl-tab{padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid var(--divider);background:var(--w);transition:all 0.15s}
-.tpl-tab.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tpl-tab.on{background:#7d8b8f;color:#fff;border-color:#7d8b8f}
 .tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .tpl-card{background:var(--card);border:1px solid var(--divider);border-radius:8px;padding:18px;transition:all 0.15s}
 .tpl-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.07);border-color:var(--accent)}
@@ -473,8 +473,8 @@ table tbody tr:hover{background:var(--light)}
 .tpl-new-cat-input{display:inline-flex;align-items:center;gap:6px}
 .tpl-new-cat-input input{border:1px solid var(--accent);border-radius:16px;padding:4px 10px;font-size:12px;width:100px;background:var(--w);outline:none}
 .tpl-new-cat-input button{padding:3px 10px;border:none;border-radius:12px;font-size:11px;cursor:pointer;font-weight:500;white-space:nowrap}
-.tpl-cat-save{background:var(--accent);color:#fff}.tpl-cat-save:hover{opacity:0.85}
-.tpl-cat-cancel{border:1px solid var(--divider)!important;background:var(--w);color:var(--tx3)}.tpl-cat-cancel:hover{border-color:var(--tx3)}
+.tpl-cat-save{background:var(--accent);color:#fff;transition:all .15s}.tpl-cat-save:hover{opacity:0.85}.tpl-cat-save:active{transform:scale(0.96)}
+.tpl-cat-cancel{border:1px solid var(--divider)!important;background:var(--w);color:var(--tx3);transition:all .15s}.tpl-cat-cancel:hover{border-color:var(--tx3)}.tpl-cat-cancel:active{transform:scale(0.96)}
 
 /* ---- 模板卡片操作按钮 ---- */
 .tpl-card{position:relative}
@@ -493,19 +493,42 @@ table tbody tr:hover{background:var(--light)}
 .cal-mg .cd{min-height:34px;padding:2px;text-align:center;font-size:11px;cursor:pointer;border-right:1px solid var(--divider);border-bottom:1px solid var(--divider);position:relative}
 .cal-mg .cd:hover{background:var(--light)}.cal-mg .cd.om{color:var(--tx3);background:var(--light)}
 .cal-mg .cd.tdy{background:#f5f2ef}.cal-mg .cd.tdy .dn{font-weight:700;color:var(--accent)}
-.cal-mg .cd.sel{background:#f0ece6}.cal-mg .cd .dn{display:block;margin-bottom:1px}
+.cal-mg .cd.sel{background:#f0ece6;box-shadow:inset 0 0 0 1px var(--accent);border-radius:2px}.cal-mg .cd .dn{display:block;margin-bottom:1px}
 .cal-dots{display:flex;justify-content:center;gap:2px;margin-top:1px}.cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
 .cal-dot.trial{background:var(--accent)}.cal-dot.meeting{background:#5b7e9a}.cal-dot.deadline{background:var(--warn)}
 /* 事件列表 */
 .evt-list{flex:1;min-width:0}.evt-day-hd{font-weight:600;font-size:14px;padding:8px 0;border-bottom:2px solid var(--accent);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .evt-card{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:4px 0;background:var(--card);border-radius:6px;cursor:pointer;border-left:3px solid var(--divider)}
-.evt-card:hover{box-shadow:0 1px 4px rgba(0,0,0,.08)}.evt-card.trial{border-left-color:var(--accent)}.evt-card.meeting{border-left-color:#5b7e9a}.evt-card.deadline{border-left-color:var(--warn)}
+.evt-card:hover{background:var(--light);box-shadow:0 1px 4px rgba(0,0,0,.08)}.evt-card.trial{border-left-color:var(--accent)}.evt-card.meeting{border-left-color:#5b7e9a}.evt-card.deadline{border-left-color:var(--warn)}
 .evt-card .evt-time{font-size:12px;color:var(--tx2);min-width:70px;text-align:center}.evt-card .evt-body{flex:1}.evt-card .evt-body .evt-title{font-weight:600;font-size:13px}
 .evt-card .evt-body .evt-meta{font-size:11px;color:var(--tx3);margin-top:2px}.evt-empty{text-align:center;padding:40px;color:var(--tx3)}
 /* 周视图 */
 .wk-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.wk-col{background:var(--card);border-radius:4px;min-height:120px;padding:4px}
 .wk-col .wkh{text-align:center;font-weight:600;font-size:11px;padding:4px;border-bottom:1px solid var(--divider);margin-bottom:4px}
 .wk-col.tdy{background:#f5f2ef}.wk-col .wke{margin:1px 0;padding:2px 4px;border-radius:3px;font-size:10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid var(--accent)}
+/* 日视图 */
+.day-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 0;margin-bottom:8px;flex-wrap:wrap;gap:4px}
+.day-nav .dn-date{font-size:16px;font-weight:700}
+.day-nav .dn-wd{font-size:12px;color:var(--tx2);margin-left:6px}
+.day-timeline{display:flex;flex-direction:column;border:1px solid var(--divider);border-radius:8px;overflow-y:auto;max-height:70vh;background:var(--card)}
+.day-tl-row{display:flex;min-height:48px;border-bottom:1px solid var(--divider);position:relative}
+.day-tl-row:last-child{border-bottom:none}
+.day-tl-hour{width:60px;flex-shrink:0;text-align:center;font-size:10px;color:var(--tx2);padding-top:4px;border-right:1px solid var(--divider);background:var(--light)}
+.day-tl-slot{flex:1;position:relative;min-height:48px;cursor:pointer}
+.day-tl-slot:hover{background:#fafafa}
+.day-evt{position:absolute;left:4px;right:4px;padding:4px 8px;border-radius:4px;font-size:11px;overflow:hidden;cursor:pointer;z-index:2;border-left:3px solid var(--accent)}
+.day-evt:hover{filter:brightness(.95);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.day-evt .dv-t{font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-evt .dv-m{font-size:10px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-evt.trial{background:#faf5ef;border-left-color:var(--accent)}
+.day-evt.meeting{background:#eef4f8;border-left-color:#5b7e9a}
+.day-evt.deadline{background:#fef2f2;border-left-color:var(--warn)}
+.day-evt.other{background:var(--light);border-left-color:var(--tx3)}
+.day-allday{padding:8px 12px;border-bottom:1px solid var(--divider);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.day-allday .da-label{font-size:10px;color:var(--tx2);font-weight:600;flex-shrink:0}
+.day-allday .da-item{font-size:11px;background:var(--light);padding:3px 10px;border-radius:12px;cursor:pointer;border-left:3px solid var(--accent)}
+.day-allday .da-item:hover{background:#e8e4dc}
+@media(max-width:768px){.day-tl-hour{width:40px;font-size:9px}}
 /* 列表视图 */
 .lst-tbl{width:100%}.lst-tbl td{padding:8px 10px;vertical-align:middle}.lst-tbl .lst-type{font-size:11px;display:inline-block;padding:2px 8px;border-radius:10px;font-weight:600}
 .lst-type.trial{background:#fef0eb;color:var(--accent)}.lst-type.meeting{background:#e8f0f5;color:#5b7e9a}.lst-type.deadline{background:#fef0eb;color:var(--warn)}.lst-type.other{background:var(--light);color:var(--tx2)}
@@ -513,13 +536,23 @@ table tbody tr:hover{background:var(--light)}
 /* ---- 计费三标签页 ---- */
 .bill-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--divider)}
 .bill-tab{padding:8px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
-.bill-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.bill-tab.on{color:#7d8b8f;border-bottom-color:#7d8b8f;font-weight:600}
+/* ---- 设置页标签 ---- */
+.sys-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--divider);flex-wrap:wrap}
+.sys-tab{padding:8px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.sys-tab.on{color:#7d8b8f;border-bottom-color:#7d8b8f;font-weight:600}
+/* ---- Toggle 开关 ---- */
+.tgl-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.tgl-track{width:44px;height:24px;border-radius:12px;background:var(--divider);position:relative;transition:background .2s}
+.tgl-track.on{background:var(--success)}
+.tgl-knob{width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.tgl-track.on .tgl-knob{left:22px}
 /* 工时时间线 */
 .time-timeline{position:relative;padding-left:0}.time-day-group{margin-bottom:16px}
 .time-day-hd{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--divider);margin-bottom:6px}
-.time-day-hd .day-label{font-weight:600;font-size:14px}.time-day-hd .day-total{font-size:12px;color:var(--tx2);background:var(--light);padding:3px 10px;border-radius:10px}
+.time-day-hd .day-label{font-weight:600;font-size:14px}.time-day-hd .day-total{font-size:12px;color:#fff;background:#7d8b8f;font-size:12px;color:var(--tx2);background:var(--light);padding:3px 10px;border-radius:10px}
 .tr-card{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:4px 0;background:var(--card);border-radius:6px;font-size:13px;border-left:3px solid var(--primary)}
-.tr-card:hover{box-shadow:0 1px 4px rgba(0,0,0,.06)}.tr-card .tr-time{min-width:130px;font-size:12px;color:var(--tx2)}
+.tr-card:hover{background:var(--light);box-shadow:0 1px 4px rgba(0,0,0,.06)}.tr-card .tr-time{min-width:130px;font-size:12px;color:var(--tx2)}
 .tr-card .tr-dur{min-width:55px;font-weight:600;color:var(--accent);text-align:center}.tr-card .tr-case{min-width:100px;font-size:12px;color:var(--primary)}
 .tr-card .tr-desc{flex:1;font-size:13px}.tr-card .tr-acts{display:flex;gap:4px}
 /* 账单预览 A4纸 */
@@ -571,10 +604,10 @@ table tbody tr:hover{background:var(--light)}
 .rt-tabs{display:flex;gap:0;border-bottom:2px solid var(--divider);margin-bottom:16px}
 .rt-tab{padding:10px 20px;font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;user-select:none}
 .rt-tab:hover{color:var(--primary)}
-.rt-tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+.rt-tab.on{color:#7d8b8f;border-bottom-color:#7d8b8f}
 /* 工作记录卡片 */
 .wr-card{background:var(--card);border-radius:8px;padding:12px 16px;margin-bottom:8px;border-left:3px solid var(--primary);transition:box-shadow .2s}
-.wr-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.wr-card:hover{background:var(--light);box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .wr-card .wr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .wr-card .wr-date{font-size:12px;color:var(--tx3)}.wr-card .wr-hours{font-weight:700;color:var(--accent);font-size:13px}
 .wr-card .wr-type{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:var(--light);color:var(--tx2);margin-right:8px}
@@ -594,7 +627,7 @@ table tbody tr:hover{background:var(--light)}
 .rt-side-card .rtsc-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;color:var(--tx2)}
 .rt-side-card .rtsc-row .rtsc-lbl{color:var(--tx3)}.rt-side-card .rtsc-row .rtsc-val{font-weight:600}
 .rt-side-card .rtsc-btn{display:block;width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid var(--primary);background:#fff;color:var(--primary);font-size:12px;cursor:pointer;text-align:center;transition:all .2s}
-.rt-side-card .rtsc-btn:hover{background:var(--primary);color:#fff}
+.rt-side-card .rtsc-btn:hover{background:var(--primary);color:#fff}.rtsc-btn:active{transform:scale(0.97)}
 /* 统计图表 */
 .rt-chart-wrap{background:var(--card);border-radius:10px;padding:16px;margin-bottom:14px}
 .rt-chart-wrap .rt-chart-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--tx1)}
@@ -630,7 +663,7 @@ table tbody tr:hover{background:var(--light)}
 .parse-field-row{display:flex;align-items:center;margin-bottom:10px;padding:6px 10px;border-radius:6px;gap:10px}
 .parse-field-row label{width:100px;font-size:12px;color:var(--tx2);font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:4px}
 .parse-field-row input,.parse-field-row select{flex:1;border:1px solid var(--divider);border-radius:4px;padding:6px 10px;font-size:13px;background:#fff}
-.parse-field-row input:focus,.parse-field-row select:focus{border-color:var(--primary);outline:none}
+.parse-field-row input:focus,.parse-field-row select:focus{border-color:var(--accent);outline:none}
 .parse-field-row.fw{flex-direction:column;align-items:stretch}
 .parse-field-row.fw label{width:auto}
 /* 置信度标记 */
@@ -717,6 +750,75 @@ table tbody tr:hover{background:var(--light)}
 
 /* 响应式 */
 @media(max-width:500px){.ai-panel{width:100vw;right:-100vw}}
+@media(max-width:900px){
+  .bill-wrap{grid-template-columns:1fr}
+  .cas-info-grid{grid-template-columns:1fr}
+  .search-drop{width:calc(100vw - 32px);right:8px}
+}
+@media(max-width:768px){
+  .sidebar{width:56px}
+  .sidebar .sh h3,.sidebar .ni span:last-child,.sidebar .sf span{display:none}
+  .sidebar .ni{padding:10px 0;justify-content:center}
+  .sidebar .sh{padding:14px 0;justify-content:center}
+  .main-wrap{margin-left:56px}
+  .cal-wrap{flex-direction:column}
+  .cal-mini{width:100%}
+  .stage-bar{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .stage-bar .stage-dot{flex-shrink:0}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .topbar{padding:0 12px}
+  .topbar .ttm{display:none}
+  .top-search input{width:120px}
+  .top-search input:focus{width:160px}
+  .search-drop{width:calc(100vw - 16px);right:4px;max-height:380px}
+  .modal{width:92vw!important;max-width:92vw}
+  .page-content{padding:16px 8px}
+  .tr-card,.evt-card,.wr-card{padding:10px}
+}
+/* ---- 全局 Tooltip ---- */
+.gt{position:fixed;z-index:4000;max-width:320px;padding:6px 10px;font-size:12px;line-height:1.5;background:#3a3a3a;color:#fff;border-radius:5px;pointer-events:none;opacity:0;transition:opacity .12s;word-break:break-all}
+.gt.on{opacity:1}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;max-width:100%}
+/* ---- 日历悬浮预览卡片 ---- */
+.cal-hover-card{position:fixed;z-index:3000;min-width:180px;max-width:220px;background:#fafaf8;border:1px solid #e0dcd5;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.08);padding:6px 0;display:none}
+.cal-hover-card.on{display:block}
+.cal-hover-card .ch-item{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:12px;color:var(--tx)}
+.cal-hover-card .ch-item+.ch-item{border-top:1px solid #f0ede8}
+.cal-hover-card .ch-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cal-hover-card .ch-dot.trial{background:var(--accent)}
+.cal-hover-card .ch-dot.meeting{background:#5b7e9a}
+.cal-hover-card .ch-dot.deadline{background:var(--warn)}
+.cal-hover-card .ch-dot.other{background:var(--tx3)}
+.cal-hover-card .ch-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-hover-card .ch-time{font-size:11px;color:var(--tx3);flex-shrink:0}
+.cal-hover-card .ch-empty{padding:10px 12px;font-size:12px;color:var(--tx3);text-align:center}
+.cal-hover-card .ch-more{padding:3px 12px;font-size:11px;color:var(--accent);cursor:pointer;text-align:center;border-top:1px solid #f0ede8}
+.cal-hover-card .ch-more:hover{text-decoration:underline}
+.cal-hover-card .ch-scroll{max-height:200px;overflow-y:auto}
+/* ---- 全局搜索 ---- */
+.top-search{position:relative;margin-left:auto;margin-right:12px}
+.top-search input{border:1px solid var(--divider);border-radius:16px;padding:5px 12px 5px 32px;font-size:13px;width:180px;transition:all .2s;background:#f9f7f4;outline:none}
+.top-search input:focus{width:260px;border-color:var(--accent);background:var(--card);box-shadow:0 0 0 3px rgba(176,152,120,0.1)}
+.top-search input::placeholder{color:var(--tx3)}
+.gb-timer{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--accent);color:#fff;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;margin-left:8px;font-variant-numeric:tabular-nums}
+.gb-timer:hover{opacity:.88;transform:scale(1.02)}
+.gb-timer:active{transform:scale(.97)}
+.top-search .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--tx3);pointer-events:none}
+.search-drop{position:fixed;z-index:5000;top:52px;right:24px;width:420px;max-height:460px;background:var(--card);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid var(--divider);overflow-y:auto;display:none}
+.search-drop.on{display:block}
+.search-group{padding:8px 0}
+.search-group+.search-group{border-top:1px solid var(--divider)}
+.search-group-hd{padding:4px 16px;font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.search-item{padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s}
+.search-item:hover,.search-item.sel{background:var(--light)}
+.search-item .si-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.search-item .si-body{flex:1;min-width:0}
+.search-item .si-title{font-size:13px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-item .si-sub{font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-drop .search-empty{padding:24px;text-align:center;color:var(--tx3);font-size:13px}
+.search-mask{position:fixed;inset:0;z-index:4999;display:none}
+.search-mask.on{display:block}
+
 </style>
 </head>
 <body>
@@ -732,7 +834,7 @@ table tbody tr:hover{background:var(--light)}
 <!-- 主内容区 -->
 <div class="main-wrap">
 <div class="main-area">
-  <div class="topbar"><span class="ttl" id="ttl"></span><span class="ttm" id="ttm"></span></div>
+  <div class="topbar"><span class="ttl" id="ttl"></span><span class="ttm" id="ttm"></span><div class="top-search" id="topSearch"><span class="search-icon">🔍</span><input type="text" id="globalSearchInput" placeholder="搜索案件、客户、文档..." autocomplete="off"><div class="search-drop" id="searchDrop"></div></div><div class="search-mask" id="searchMask" onclick="closeSearch()"></div><span class="gb-timer" id="gbTimer" style="display:none" onclick="navTo('billing')" title="点击跳转计费页">⏱ <span id="gbTimerDisp">00:00</span></span></div>
   <div class="page-content" id="pc"></div>
 </div>
 
@@ -824,6 +926,27 @@ var _tplEditorState=null;
 var _selectedClientId=null;
 var _retainerDetailId=null;
 var _retainerTab='work';
+var _pollTimer=null,_pollBusy=false;
+function startPolling(k){
+  stopPolling();
+  var fn=null;
+  switch(k){
+    case'cases':fn=function(){if(typeof loadCases==='function')loadCases()};break;
+    case'clients':fn=function(){if(typeof loadClientList==='function')loadClientList()};break;
+    case'documents':fn=function(){if(typeof loadDocs==='function')loadDocs()};break;
+    case'dashboard':fn=function(){if(typeof loadDashboard==='function')loadDashboard()};break;
+    case'schedules':fn=function(){if(typeof loadCal==='function')loadCal()};break;
+    case'retainerClients':fn=function(){if(typeof loadRetainerList==='function')loadRetainerList()};break;
+    case'messages':fn=function(){if(typeof loadMsgData==='function')loadMsgData()};break;
+    case'preservations':fn=function(){if(typeof loadPresSummary==='function')loadPresSummary()};break;
+  }
+  if(fn){_pollTimer=setInterval(function(){if(!_pollBusy){_pollBusy=true;fn();setTimeout(function(){_pollBusy=false},500)}},60000)}
+}
+function stopPolling(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null}}
+
+var _pgState={};
+var _scrollState={};
+var _mainScroll=document.querySelector('.main-area');
 var _rtFilter={status:'',search:''};
 var _parseResult=null;  // AI 文书解析结果
 var _aiMode='draft';             // 当前 AI 模式
@@ -867,7 +990,193 @@ function esc(s){if(!s&&s!==0)return'';var d=document.createElement('div');d.text
 function cfg(k,v){var c;try{c=JSON.parse(localStorage.getItem('lu_cfg')||'{}')}catch(e){c={}}if(v!==undefined){c[k]=v;localStorage.setItem('lu_cfg',JSON.stringify(c))}return c[k]}
 function fmd(v){return v||'-'}
 function fma(v){if(!v&&v!==0)return'-';var n=Number(v);if(isNaN(n))return'-';return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function emptyState(icon,text,btnHtml){
+  var h='<div class="empty" style="padding:30px">';
+  if(icon)h+='<div class="eicon">'+icon+'</div>';
+  if(text)h+='<p>'+text+'</p>';
+  if(btnHtml)h+=btnHtml;
+  h+='</div>';
+  return h
+}
 function toast(m,t){var e=document.querySelector('.toast');if(e)e.remove();var d=document.createElement('div');d.className='toast '+(t||'');d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},3000)}
+function snapshotPageState(){
+  if(!_mainScroll)_mainScroll=document.querySelector('.main-area');
+  if(_mainScroll)_scrollState[currentPage]=_mainScroll.scrollTop;
+  var st={};
+  // Save common input values for each page
+  var ids=['cas_s','cas_st','cas_sort','cls_s','doc_s','us_s','rtSearch','lc_search'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)st[id]=el.value});
+  if(typeof PG!=='undefined')st['_pg']=JSON.parse(JSON.stringify(PG));
+  if(typeof _docFilters!=='undefined')st['_docFilters']=JSON.parse(JSON.stringify(_docFilters));
+  if(typeof _rtFilter!=='undefined')st['_rtFilter']=JSON.parse(JSON.stringify(_rtFilter));
+  if(typeof _curTplCategory!=='undefined')st['_curTplCategory']=_curTplCategory;
+  if(typeof _sysTab!=='undefined')st['_sysTab']=_sysTab;
+  if(typeof _billTab!=='undefined')st['_billTab']=_billTab;
+  if(typeof _selectedClientId!=='undefined')st['_selectedClientId']=_selectedClientId;
+  _pgState[currentPage]=st;
+}
+function restorePageState(k){
+  var st=_pgState[k];if(!st)return;
+  if(st['_pg']&&typeof PG!=='undefined')PG=st['_pg'];
+  if(st['_docFilters']&&typeof _docFilters!=='undefined')_docFilters=st['_docFilters'];
+  if(st['_rtFilter']&&typeof _rtFilter!=='undefined')_rtFilter=st['_rtFilter'];
+  if(st['_curTplCategory']!==undefined&&typeof _curTplCategory!=='undefined')_curTplCategory=st['_curTplCategory'];
+  if(st['_billTab']!==undefined&&typeof _billTab!=='undefined')_billTab=st['_billTab'];
+  if(st['_selectedClientId']!==undefined&&typeof _selectedClientId!=='undefined')_selectedClientId=st['_selectedClientId'];
+  if(st['_sysTab']!==undefined&&typeof _sysTab!=='undefined')_sysTab=st['_sysTab'];
+  // Restore input values (setTimeout to allow DOM to render)
+  setTimeout(function(){
+    var ids=['cas_s','cas_st','cas_sort','cls_s','doc_s','us_s','rtSearch','lc_search'];
+    ids.forEach(function(id){var el=document.getElementById(id);if(el&&st[id]!==undefined)el.value=st[id]});
+    if(_mainScroll&&_scrollState[k]!==undefined)_mainScroll.scrollTop=_scrollState[k];
+  },100);
+}
+
+/* ---- Tooltip 系统 ---- */
+var _gtEl=null;
+function initGt(){
+  if(_gtEl)return;
+  _gtEl=document.createElement('div');_gtEl.className='gt';_gtEl.id='gt';document.body.appendChild(_gtEl);
+}
+function showGt(text,e){
+  initGt();_gtEl.textContent=text;_gtEl.classList.add('on');
+  var rect=e.getBoundingClientRect();
+  var top=rect.bottom+4,left=rect.left;
+  if(top+40>window.innerHeight){top=rect.top-30}
+  if(left+_gtEl.offsetWidth>window.innerWidth-8)left=window.innerWidth-_gtEl.offsetWidth-8;
+  if(left<8)left=8;
+  _gtEl.style.top=top+'px';_gtEl.style.left=left+'px';
+}
+function hideGt(){if(_gtEl){_gtEl.classList.remove('on')}}
+document.addEventListener('mouseover',function(e){
+  var el=e.target.closest('[data-tt]');
+  if(!el)return;
+  if(!window.matchMedia('(hover:hover)').matches)return;
+  showGt(el.getAttribute('data-tt'),el);
+});
+document.addEventListener('mouseout',function(e){
+  var el=e.target.closest('[data-tt]');
+  if(el)hideGt();
+});
+document.addEventListener('scroll',function(){hideGt();hideCalHover()},true);
+function tt(text){return '<span data-tt="'+esc(String(text||''))+'" class="ell">'+esc(String(text||''))+'</span>'}
+
+/* ---- 全局搜索 ---- */
+var _searchTimer=null,_searchSel=-1,_searchResults=null;
+var GROUP_ICONS={cases:'⚖️',clients:'👤',retainers:'🤝',documents:'📄',templates:'📋',tasks:'✅',work_records:'📝',local_cases:'📚'};
+var GROUP_LABELS={cases:'案件',clients:'客户',retainers:'常法客户',documents:'文档',templates:'模板',tasks:'待办任务',work_records:'工作记录',local_cases:'本地判例'};
+
+function initSearch(){
+  var inp=$('globalSearchInput');
+  if(!inp||inp._init)return;
+  inp._init=true;
+  inp.addEventListener('input',function(){
+    clearTimeout(_searchTimer);
+    var q=inp.value.trim();
+    if(!q){closeSearch();return}
+    _searchTimer=setTimeout(function(){doSearch(q)},300);
+  });
+  inp.addEventListener('focus',function(){
+    if(inp.value.trim()&&_searchResults)openSearch();
+  });
+  inp.addEventListener('keydown',function(e){onSearchKey(e)});
+  // Click outside closes
+  document.addEventListener('click',function(e){
+    var drop=$('searchDrop');var inp=$('globalSearchInput');
+    if(drop&&drop.classList.contains('on')&&!drop.contains(e.target)&&e.target!==inp){
+      closeSearch();
+    }
+  });
+}
+
+function doSearch(q){
+  apiFetch('/api/search?q='+encodeURIComponent(q)+'&limit=20').then(function(res){
+    _searchResults=res.groups||{};
+    _searchSel=-1;
+    renderSearchResults();
+    openSearch();
+  }).catch(function(){});
+}
+
+function renderSearchResults(){
+  var drop=$('searchDrop');
+  if(!drop)return;
+  var groups=_searchResults||{};
+  var total=0;
+  var h='';
+  Object.keys(groups).forEach(function(gk){
+    var items=groups[gk];
+    if(!items||!items.length)return;
+    total+=items.length;
+    h+='<div class="search-group"><div class="search-group-hd">'+esc(GROUP_LABELS[gk]||gk)+' ('+items.length+')</div>';
+    items.forEach(function(it,idx){
+      var globalIdx=total-items.length+idx;
+      var cls=(globalIdx===_searchSel)?' sel':'';
+      h+='<div class="search-item'+cls+'" data-gk="'+gk+'" data-gidx="'+idx+'" onclick="navigateSearchResult(\''+gk+'\','+idx+')" onmouseenter="highlightSearchItem('+globalIdx+')">';
+      h+='<span class="si-icon">'+(GROUP_ICONS[gk]||'🔍')+'</span>';
+      h+='<div class="si-body"><div class="si-title">'+esc(it.title||'')+'</div>';
+      if(it.subtitle)h+='<div class="si-sub">'+esc(it.subtitle)+'</div>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+  });
+  if(!total)h='<div class="search-empty">未找到匹配结果</div>';
+  drop.innerHTML=h;
+}
+
+function openSearch(){
+  var drop=$('searchDrop');var mask=$('searchMask');
+  if(drop)drop.classList.add('on');
+  if(mask)mask.classList.add('on');
+}
+
+function closeSearch(){
+  var drop=$('searchDrop');var mask=$('searchMask');var inp=$('globalSearchInput');
+  if(drop)drop.classList.remove('on');
+  if(mask)mask.classList.remove('on');
+  _searchSel=-1;
+}
+
+function highlightSearchItem(idx){
+  _searchSel=idx;
+  renderSearchResults();
+}
+
+function onSearchKey(e){
+  var drop=$('searchDrop');
+  if(!drop||!drop.classList.contains('on'))return;
+  // Count total items
+  var total=0;
+  var groups=_searchResults||{};
+  Object.keys(groups).forEach(function(gk){total+=(groups[gk]||[]).length});
+  if(e.key==='ArrowDown'){e.preventDefault();_searchSel=Math.min(_searchSel+1,total-1);if(_searchSel<0)_searchSel=0;renderSearchResults();}
+  else if(e.key==='ArrowUp'){e.preventDefault();_searchSel=Math.max(_searchSel-1,0);renderSearchResults();}
+  else if(e.key==='Enter'){e.preventDefault();
+    if(_searchSel>=0){
+      var flat=[];Object.keys(groups).forEach(function(gk){(groups[gk]||[]).forEach(function(it,idx){flat.push({gk:gk,idx:idx})})});
+      if(_searchSel<flat.length){var s=flat[_searchSel];navigateSearchResult(s.gk,s.idx)}
+    }
+  }
+  else if(e.key==='Escape'){closeSearch();$('globalSearchInput').blur()}
+}
+
+function navigateSearchResult(gk,idx){
+  closeSearch();
+  var groups=_searchResults||{};
+  var items=groups[gk];
+  if(!items||!items[idx])return;
+  var it=items[idx];
+  var t=it.target||'';
+  $('globalSearchInput').value='';
+  if(t.startsWith('cases:')){navToCase(parseInt(t.split(':')[1]))}
+  else if(t.startsWith('clients:')){navTo('clients');setTimeout(function(){selectClient(parseInt(t.split(':')[1]))},200)}
+  else if(t.startsWith('retainer:')){navToRetainer(parseInt(t.split(':')[1]))}
+  else if(t.startsWith('documents:')){navTo('documents')}
+  else if(t.startsWith('templates:')){navTo('templateCenter')}
+  else if(t.startsWith('messages:')){navTo('messages')}
+  else if(t.startsWith('localCases:')){navToLocalCase(parseInt(t.split(':')[1]))}
+}
+
 function modal(h){$('mr').innerHTML=h}
 function closemodal(){$('mr').innerHTML=''}
 
@@ -1050,6 +1359,7 @@ function buildNav(){
 }
 
 function navTo(k){
+  snapshotPageState();
   currentPage=k;
   var ns=document.querySelectorAll('.ni');
   ns.forEach(function(n){n.classList.remove('ac')});
@@ -1065,6 +1375,10 @@ function navTo(k){
    页面路由
    ============================================================ */
 function render(k){
+  hideGt();
+  hideCalHover();
+  _calDelegationReady=false;
+  closeSearch();
   var h='';
   switch(k){
     case'dashboard':h=rdash();break;case'clients':h=rclients();break;
@@ -1075,7 +1389,9 @@ function render(k){
     default:h=rdash();
   }
   $('pc').innerHTML=h;
+  restorePageState(k);
   // 加载异步数据
+  startPolling(k);
   if(k==='schedules')setTimeout(function(){loadCal()},50);
   if(k==='messages')setTimeout(function(){loadMsgData()},50);
   if(k==='billing')initTimer();
@@ -1488,6 +1804,12 @@ function casDetail(id){
     h+='<div><span style="color:var(--tx3)">标的额</span><div style="color:var(--accent);font-weight:700">¥'+fma(c.amount_in_dispute)+' 万元</div></div>';
     h+='<div><span style="color:var(--tx3)">当前阶段</span><div><span class="tag">'+stage+'</span></div></div>';
     h+='</div>';
+    // 关联客户标签
+    if(c.clients&&c.clients.length>0){
+      h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--divider);font-size:12px"><span style="color:var(--tx3)">关联客户：</span>';
+      c.clients.forEach(function(cl){h+='<span class="tag" style="cursor:pointer;margin:2px" onclick="navTo(\'clients\');setTimeout(function(){selectClient('+cl.id+')},200)">'+esc(cl.role||'委托人')+': '+esc(cl.name)+'</span>'});
+      h+='<span id="retainerBadge'+c.id+'" style="margin-left:8px"></span></div>';
+    }
     if(c.notes)h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--divider);font-size:12px"><span style="color:var(--tx3)">备注：</span>'+esc(c.notes)+'</div>';
     h+='</div></div>';
 
@@ -1560,6 +1882,8 @@ function casDetail(id){
     loadCaseDocs(c.id);
     loadCaseTodos(c.id,c.case_number);
     loadCaseBilling(c.id);
+    loadCaseSchedules(c.id);
+    loadCaseRetainer(c.id);
     loadSimilarCases(c.case_reason||'',c.court||'',c.judge||'');
     loadPreservations(c.id);
   }).catch(function(){
@@ -1576,14 +1900,20 @@ function loadCaseDocs(caseId){
       h='<table><thead><tr><th>文件名</th><th>类型</th><th>日期</th><th>大小</th><th>操作</th></tr></thead><tbody>';
       docs.forEach(function(d){
         var size=d.file_size?fileSize(d.file_size):'—';
-        var dlUrl=API+'/api/documents/'+d.id+'/download';
-        if(_TQ)dlUrl+='?'+_TQ;
         var ft=(d.file_type||'').toLowerCase();
+        var canPreview=isPreviewable(ft);
+        var dlUrl=API+'/api/documents/'+d.id+'/download';
+        var pvUrl=API+'/api/documents/'+d.id+'/preview';
+        if(_TQ){dlUrl+='?'+_TQ;pvUrl+='?'+_TQ}
         var btns='<a href="'+dlUrl+'" class="btn btn-o btn-sm">⬇ 下载</a>';
+        if(canPreview)btns+=' <a href="'+pvUrl+'" target="_blank" class="btn btn-o btn-sm">👁 预览</a>';
         if(d.is_draft||ft==='docx'||ft==='docm')btns+=' <button class="btn btn-o btn-sm" onclick="editDoc('+d.id+')">✏️ 编辑</button>';
         btns+=' <button class="btn btn-d btn-sm" onclick="ddoc('+d.id+')">🗑</button>';
         var isDraftOrEditable=d.is_draft||ft==='docx'||ft==='docm';
-        var nameClick=isDraftOrEditable?'editDoc('+d.id+')':"window.open('"+dlUrl+"','_blank')";
+        var nameClick;
+        if(isDraftOrEditable)nameClick='editDoc('+d.id+')';
+        else if(canPreview)nameClick="window.open('"+pvUrl+"','_blank')";
+        else nameClick="window.open('"+dlUrl+"','_blank')";
         h+='<tr><td>'+docIcon(d.file_type)+' <b style="cursor:pointer;color:var(--nv)" onclick="'+nameClick+'">'+esc(d.original_name||d.filename||'未命名')+'</b></td><td>'+catLabel(d.doc_category)+'</td><td>'+fmd((d.uploaded_at||d.created_at||'').slice(0,10))+'</td><td>'+size+'</td><td>'+btns+'</td></tr>';
       });
       h+='</tbody></table>';
@@ -1609,13 +1939,71 @@ function doneCaseTodo(taskId,caseId){doneTask(taskId);setTimeout(function(){load
 
 // 辅助：工时汇总
 function loadCaseBilling(caseId){
-  apiFetch('/api/lw/time-records?limit=200').then(function(tr){
-    var items=(tr.items||[]).filter(function(t){return t.case_name&&_caseDetailData&&t.case_name.indexOf(_caseDetailData.case_number)>-1});
-    // Update the billing panel - skip for now
+  apiFetch('/api/billing/time-records?case_id='+caseId+'&limit=500').then(function(res){
+    var records=Array.isArray(res)?res:(res.items||[]);
+    var totalMin=0;
+    records.forEach(function(r){totalMin+=r.duration_minutes||0});
+    var hours=(totalMin/60).toFixed(1);
+    // Get billing rate
+    var rate=_caseDetailData&&_caseDetailData.billing_rate?_caseDetailData.billing_rate:0;
+    if(!rate){
+      apiFetch('/api/billing/config').then(function(configs){
+        var def=Array.isArray(configs)?configs.find(function(c){return c.is_default}):null;
+        rate=def?def.unit_price:2000;
+        updateBillingPanel(hours,rate);
+      }).catch(function(){updateBillingPanel(hours,2000)})
+    }else{updateBillingPanel(hours,rate)}
   }).catch(function(){})
+}
+function updateBillingPanel(hours,rate){
+  var amt=(parseFloat(hours)*rate).toFixed(2);
+  var card=document.querySelector('#casDetailArea .pnl:nth-child(8) .pnl-bd');//工时费用 card
+  if(card){
+    card.innerHTML='<div style="font-size:13px;color:var(--tx2);line-height:1.8"><div>本案累计工时：<b style="color:var(--accent)">'+hours+' 小时</b></div><div>本案累计费用：<b style="color:var(--accent)">¥'+fma(parseFloat(amt))+'</b></div></div><button class="btn btn-o btn-sm" style="margin-top:8px" onclick="navTo(\'billing\')">查看完整工时 →</button>';
+  }
 }
 
 // 辅助：本地相似案件
+function loadCaseSchedules(caseId){
+  apiFetch('/api/schedules?case_id='+caseId+'&limit=20').then(function(res){
+    var scheds=Array.isArray(res)?res:(res.items||[]);
+    if(scheds.length===0)return;
+    // Find key dates panel and append schedules
+    var kdPanels=document.querySelectorAll('#casDetailArea .pnl');
+    kdPanels.forEach(function(pnl){
+      var hd=pnl.querySelector('.pnl-hd');
+      if(hd&&hd.textContent.indexOf('关键日期')>=0){
+        var bd=pnl.querySelector('.pnl-bd');
+        if(!bd)return;
+        var h='';
+        scheds.forEach(function(s){
+          var sd=s.start_time?s.start_time.slice(0,10):'';
+          var nd=daysUntil(sd),cls='',label='';
+          if(nd!==null&&nd<0){cls='overdue';label='已过期'}
+          else if(nd!==null&&nd<=3){cls='urgent';label=nd+'天'}
+          else if(nd!==null&&nd<=7){cls='near';label=nd+'天'}
+          else{label=nd!==null?nd+'天':''}
+          h+='<div class="key-date" style="cursor:pointer" onclick="osched('+s.id+')"><span class="kd-name">📅 '+esc(s.title||s.schedule_type)+'</span><span style="font-size:11px">'+sd+'</span><span class="kd-count '+cls+'">'+label+'</span></div>';
+        });
+        if(bd.innerHTML.indexOf('暂无')>=0)bd.innerHTML=h;
+        else bd.innerHTML+=h;
+      }
+    });
+  }).catch(function(){})
+}
+function loadCaseRetainer(caseId){
+  if(!_caseDetailData||!_caseDetailData.clients)return;
+  _caseDetailData.clients.forEach(function(cl){
+    apiFetch('/api/retainer/by-client?client_id='+cl.id).then(function(retainers){
+      if(retainers&&retainers.length>0){
+        retainers.forEach(function(r){
+          var badge=document.getElementById('retainerBadge'+caseId);
+          if(badge)badge.innerHTML+='<span class="tag" style="background:#e8f5e9;color:#2e7d32;cursor:pointer" onclick="navToRetainer('+r.id+')">🔗 常法: '+esc(r.client_name)+'</span> ';
+        });
+      }
+    }).catch(function(){})
+  });
+}
 function loadSimilarCases(caseReason,court,judge){
   var params='case_reason='+encodeURIComponent(caseReason||'')+'&court='+encodeURIComponent(court||'')+'&judge='+encodeURIComponent(judge||'');
   apiFetch('/api/local-cases/similar?'+params).then(function(res){
@@ -2146,7 +2534,7 @@ function loadClientSubData(clientId){
     var docs=Array.isArray(res)?res:(res.items||[]);
     var h='';
     if(docs.length===0)h='<p style="font-size:12px;color:var(--tx3)">暂无文档</p>';
-    else docs.forEach(function(d){h+='<div style="font-size:12px;padding:3px 0">📎 <span style="color:var(--nv);cursor:pointer" onclick="window.open(\'/api/documents/'+d.id+'/download?token='+_TOKEN+'\')">'+esc(d.original_name||d.filename)+'</span> <span style="color:var(--tx3)">'+fmd(d.uploaded_at?d.uploaded_at.slice(0,10):'')+'</span></div>'});
+    else docs.forEach(function(d){var ft=(d.file_type||'').toLowerCase();var ep=isPreviewable(ft)?'preview':'download';h+='<div style="font-size:12px;padding:3px 0">📎 <span style="color:var(--nv);cursor:pointer" onclick="window.open(\'/api/documents/'+d.id+'/'+ep+'?token='+_TOKEN+'\')">'+esc(d.original_name||d.filename)+'</span> <span style="color:var(--tx3)">'+fmd(d.uploaded_at?d.uploaded_at.slice(0,10):'')+'</span></div>'});
     if($('clDocList'))$('clDocList').innerHTML=h;
   }).catch(function(){})
 }
@@ -2271,7 +2659,7 @@ function dclient(id){
 }
 
 /* ---- 文档管理（增强版） ---- */
-var CAT_MAP={'legal_opinion':'法律意见书','contract_draft':'合同草稿','complaint':'起诉状','defense':'答辩状','proxy_statement':'代理词','evidence_list':'证据清单','other':'其他'};
+var CAT_MAP={'legal_opinion':'法律意见书','contract_draft':'合同草稿','complaint':'起诉状','defense':'答辩状','proxy_statement':'代理词','evidence_list':'证据清单','retainer_service':'常法顾问','other':'其他'};
 function catLabel(v){return CAT_MAP[v]||v||'其他'}
 function fileSize(b){if(!b)return'0 B';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(2)+' MB'}
 
@@ -2285,6 +2673,11 @@ function docIcon(ft){
   if(t==='docx'||t==='doc')return '📝';
   if(t==='jpg'||t==='jpeg'||t==='png'||t==='gif'||t==='bmp'||t==='webp')return '🖼';
   return '📎'
+}
+
+function isPreviewable(ft){
+  var t=(ft||'').toLowerCase();
+  return t==='pdf'||t==='jpg'||t==='jpeg'||t==='png'||t==='gif'||t==='bmp'||t==='webp'||t==='doc';
 }
 
 function rdocs(){
@@ -2354,6 +2747,7 @@ function loadDocs(){
         else {
           h+='<button class="btn btn-o btn-sm" onclick="docCardAction(\'download\','+d.id+')">📥 下载</button>';
           var ft2=(d.file_type||'').toLowerCase();
+          if(isPreviewable(ft2))h+='<button class="btn btn-o btn-sm" onclick="docCardAction(\'open\','+d.id+')">👁 预览</button>';
           if(ft2==='docx'||ft2==='docm')h+='<button class="btn btn-o btn-sm" onclick="editDoc('+d.id+')">✏️ 在线编辑</button>';
         }
         h+='<button class="btn btn-o btn-sm" onclick="odoc('+d.id+')">📝 信息</button>';
@@ -2375,9 +2769,14 @@ function docCardAction(action,id){
     window.open(url,'_blank')
   }
   if(action==='open'){
-    // 草稿 → 打开编辑器；已上传 Word → 打开编辑器；其他文件 → 下载
+    // 草稿 → 打开编辑器；已上传 Word → 打开编辑器；PDF → 浏览器预览；其他 → 下载
     var ft=(d.file_type||'').toLowerCase();
     if(d.is_draft||ft==='docx'||ft==='docm'){editDoc(id)}
+    else if(isPreviewable(ft)){
+      var pvUrl=API+'/api/documents/'+id+'/preview';
+      if(_TQ)pvUrl+='?'+_TQ;
+      window.open(pvUrl,'_blank')
+    }
     else {
       var dlUrl=API+'/api/documents/'+id+'/download';
       if(_TQ)dlUrl+='?'+_TQ;
@@ -2539,6 +2938,7 @@ var calView='month',calYear=new Date().getFullYear(),calMonth=new Date().getMont
 
 /* ---- 日程与期限管理 ---- */
 var _schedCache=[],_selDate=null;
+var _hoverTimeout=null,_hoverCardEl=null;
 
 function rsched(){
   return'<div class="pnl"><div class="pnl-hd">📅 日程与期限</div><div class="pnl-bd">'+
@@ -2547,7 +2947,8 @@ function rsched(){
     '<button class="btn '+(calView==='week'?'btn-p':'btn-o')+' btn-sm" onclick="calView=\'week\';loadCal()">📆 周视图</button>'+
     '<button class="btn '+(calView==='list'?'btn-p':'btn-o')+' btn-sm" onclick="calView=\'list\';loadCal()">📋 列表视图</button>'+
     '</div><div class="tbar-r">'+
-    '<button class="btn btn-o btn-sm" onclick="smsModal()">📱 解析12368短信</button>'+
+    '<button class="btn btn-o btn-sm" onclick="navToday()">📍 今天</button>'+
+	    '<button class="btn btn-o btn-sm" onclick="smsModal()">📱 解析12368短信</button>'+
     '<button class="btn btn-p btn-sm" onclick="osched()">＋ 新增日程</button></div></div>'+
     '<div id="calArea">加载中...</div></div></div>';
 }
@@ -2557,13 +2958,14 @@ function loadCal(){
   calYear=calYear||today.getFullYear();calMonth=calMonth||today.getMonth();
   var startDate=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-01';
   var endDate=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-31';
-  if(calView==='week'||calView==='list'){
+  if(calView==='day'&&_selDate){var sd=new Date(_selDate);sd.setDate(sd.getDate()-1);var ed=new Date(_selDate);ed.setDate(ed.getDate()+1);startDate=sd.toISOString().slice(0,10);endDate=ed.toISOString().slice(0,10);} if(calView==='week'||calView==='list'){
     startDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-30).toISOString().slice(0,10);
     endDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+60).toISOString().slice(0,10);
   }
   apiFetch('/api/schedules?start_date='+startDate+'&end_date='+endDate).then(function(res){
     _schedCache=Array.isArray(res)?res:(res.items||[]);
-    if(calView==='month')buildMiniCal();
+    if(calView==='day')buildDayView();
+	    else if(calView==='month')buildMiniCal();
     else if(calView==='week')buildWeekView();
     else buildListView();
   }).catch(function(){$('calArea').innerHTML='<div class="empty"><p>加载失败</p></div>'})
@@ -2599,10 +3001,11 @@ function buildMiniCal(){
       var tc=getTypeCls(s.schedule_type);
       if(!typesSeen[tc]){typesSeen[tc]=true;dots+='<span class="cal-dot '+tc+'"></span>'}
     });
-    h+='<div class="'+cls+'" onclick="_selDate=\''+ds+'\';_schedCache.filter(function(s){var sd=s.start_time?s.start_time.slice(0,10):\'\';return sd===ds}).length>0?buildEvtList(\''+ds+'\'):buildEvtList(\''+ds+'\');buildMiniCal()"><div class="dn">'+d+'</div><div class="cal-dots">'+dots+'</div></div>';
+    h+='<div class="'+cls+'" data-date="'+ds+'"><div class="dn">'+d+'</div><div class="cal-dots">'+dots+'</div></div>';
   }
-  h+='</div></div><div class="evt-list" id="evtList">'+( _selDate?buildEvtListContent(_selDate):'<div class="evt-empty"><p>👆 点击左侧日期查看事件</p></div>')+'</div></div>';
+  h+='</div></div><div class="evt-list" id="evtList">'+( _selDate?buildEvtListContent(_selDate):'<div class="evt-empty"><p>👆 点击左侧日期查看日程详情</p></div>')+'</div></div>';
   $('calArea').innerHTML=h;
+  setupCalDelegation();
 }
 
 function buildEvtListContent(ds){
@@ -2611,19 +3014,195 @@ function buildEvtListContent(ds){
     var ed=s.end_time?s.end_time.slice(0,10):'';
     return sd<=ds&&ed>=ds;
   }).sort(function(a,b){return (a.is_all_day?-1:0)-(b.is_all_day?-1:0)||(a.start_time||'').localeCompare(b.start_time||'')});
-  var h='<div class="evt-day-hd"><span>📅 '+ds+'</span><span style="font-size:12px;color:var(--tx3)">'+evts.length+' 个事件</span></div>';
-  if(evts.length===0)h+='<div class="evt-empty"><p>当日无事件</p></div>';
+  var h='<div class="evt-day-hd"><span>📅 '+ds+'</span><span style="font-size:12px;color:var(--tx3)">'+evts.length+' 个日程</span></div>';
+  if(evts.length===0)h+='<div class="evt-empty"><p>该日暂无日程安排</p></div>';
   evts.forEach(function(s){
     var tc=getTypeCls(s.schedule_type);
     var timeStr=s.is_all_day?'全天':(s.start_time?s.start_time.slice(11,16):'');
     var endStr=s.is_all_day?'':(s.end_time?' - '+s.end_time.slice(11,16):'');
-    h+='<div class="evt-card '+tc+'" onclick="osched('+s.id+')"><div class="evt-time">'+timeStr+endStr+'</div><div class="evt-body"><div class="evt-title">'+esc(s.title)+'</div><div class="evt-meta">'+getTypeLabel(s.schedule_type)+(s.location?' · '+esc(s.location):'')+(s.case_number?' · '+esc(s.case_number):'')+'</div></div></div>';
+    var caseLink=s.case_number&&s.case_id?'<span style="cursor:pointer;color:var(--nv);font-size:11px" onclick="event.stopPropagation();navTo(\'caseDetail\');setTimeout(function(){casDetail('+s.case_id+')},200)">📋 '+esc(s.case_number)+'</span>':'';
+    var reminderMap={none:'',day0:'开庭当天提醒',d1:'提前1天提醒',d3:'提前3天提醒',d7:'提前7天提醒'};
+    var reminderTxt=s.reminder_setting&&s.reminder_setting!=='none'?reminderMap[s.reminder_setting]||s.reminder_setting:'';
+    var reminderHtml=reminderTxt?'<span style="font-size:10px;color:var(--gn)">🔔 '+esc(reminderTxt)+'</span>':'';
+    var notesHtml=s.notes?'<div style="font-size:11px;color:var(--tx3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((s.notes||'').substring(0,40))+'</div>':'';
+    h+='<div class="evt-card '+tc+'" onclick="osched('+s.id+')"><div class="evt-time">'+timeStr+endStr+'</div><div class="evt-body"><div class="evt-title">'+esc(s.title)+' '+reminderHtml+'</div><div class="evt-meta">'+getTypeLabel(s.schedule_type)+(s.location?' · '+esc(s.location):'')+(caseLink?' · '+caseLink:'')+'</div>'+notesHtml+'</div></div>';
   });
   return h;
 }
 
 function buildEvtList(ds){$('evtList').innerHTML=buildEvtListContent(ds)}
 
+var _calDelegationReady=false;
+function setupCalDelegation(){
+  if(_calDelegationReady)return;
+  var area=$('calArea');if(!area)return;
+  // Mouseover delegation: detect hovering over date cells
+  area.addEventListener('mouseover',function(e){
+    var cell=e.target.closest('.cd[data-date]');
+    if(!cell){hideCalHover();return}
+    var ds=cell.getAttribute('data-date');
+    if(!ds)return;
+    calCellEnter(e,ds);
+  });
+  // Mouseout delegation: hide hover card when leaving date cells
+  area.addEventListener('mouseout',function(e){
+    var cell=e.target.closest('.cd[data-date]');
+    if(!cell){hideCalHover();return}
+    // Check if we moved to a related target outside any .cd cell or the hover card
+    var rt=e.relatedTarget;
+    if(rt&&rt.closest){
+      if(rt.closest('.cd[data-date]'))return; // still within a date cell
+      if(rt.closest('#calHoverCard'))return; // moving to the hover card
+    }
+    calCellLeave();
+  });
+  // Click delegation: select date when clicking a cell
+  area.addEventListener('click',function(e){
+    var cell=e.target.closest('.cd[data-date]');
+    if(!cell)return;
+    var ds=cell.getAttribute('data-date');
+    if(!ds)return;
+    _selDate=ds;
+    selectCalDate(ds);
+  });
+  _calDelegationReady=true;
+}
+
+function selectCalDate(ds){
+  _selDate=ds;
+  // Update highlight
+  var cells=document.querySelectorAll('.cal-mg .cd');
+  cells.forEach(function(c){c.classList.remove('sel')});
+  var target=document.querySelector('.cal-mg .cd[data-date="'+ds+'"]');
+  if(target)target.classList.add('sel');
+  // Update event list
+  var el=$('evtList');if(el)el.innerHTML=buildEvtListContent(ds);
+}
+function initCalHover(){
+  if(_hoverCardEl)return;
+  _hoverCardEl=document.createElement('div');_hoverCardEl.className='cal-hover-card';_hoverCardEl.id='calHoverCard';
+  _hoverCardEl.addEventListener('mouseenter',function(){clearTimeout(_hoverTimeout)});
+  _hoverCardEl.addEventListener('mouseleave',function(){hideCalHover()});
+  document.body.appendChild(_hoverCardEl);
+}
+function showCalHover(e,ds){
+  initCalHover();
+  var evts=_schedCache.filter(function(s){
+    var sd=s.start_time?s.start_time.slice(0,10):'';
+    var ed=s.end_time?s.end_time.slice(0,10):'';
+    return sd<=ds&&ed>=ds;
+  }).sort(function(a,b){return(a.is_all_day?-1:0)-(b.is_all_day?-1:0)||(a.start_time||'').localeCompare(b.start_time||'')});
+  var h='';
+  if(evts.length===0){
+    h='<div class="ch-empty">当日无日程安排</div>';
+  }else{
+    var maxShow=3,extra=evts.length-maxShow;
+    var shown=evts.slice(0,maxShow);
+    shown.forEach(function(s){
+      var tc=getTypeCls(s.schedule_type);
+      var timeStr=s.is_all_day?'全天':(s.start_time?s.start_time.slice(11,16):'--:--');
+      h+='<div class="ch-item"><span class="ch-dot '+tc+'"></span><span class="ch-title">'+esc(s.title)+'</span><span class="ch-time">'+timeStr+'</span></div>';
+    });
+    if(extra>0){
+      h+='<div class="ch-scroll" style="display:none">';
+      evts.forEach(function(s){
+        var tc=getTypeCls(s.schedule_type);
+        var timeStr=s.is_all_day?'全天':(s.start_time?s.start_time.slice(11,16):'--:--');
+        h+='<div class="ch-item"><span class="ch-dot '+tc+'"></span><span class="ch-title">'+esc(s.title)+'</span><span class="ch-time">'+timeStr+'</span></div>';
+      });
+      h+='</div>';
+      h+='<div class="ch-more" onmouseenter="expandCalHover()">+'+extra+' 项更多</div>';
+    }
+  }
+  _hoverCardEl.innerHTML=h;
+  // Position below the cell
+  var cell=e.target.closest('.cd');
+  if(!cell)cell=e.target;
+  var rect=cell.getBoundingClientRect();
+  var top=rect.bottom+2,left=rect.left;
+  // Keep within viewport
+  if(top+200>window.innerHeight)top=rect.top-200;
+  if(left+220>window.innerWidth)left=Math.max(4,window.innerWidth-224);
+  if(left<4)left=4;
+  _hoverCardEl.style.top=top+'px';_hoverCardEl.style.left=left+'px';
+  _hoverCardEl.classList.add('on');
+}
+function expandCalHover(){
+  var scrollEl=_hoverCardEl.querySelector('.ch-scroll');
+  if(scrollEl){
+    scrollEl.style.display='block';
+    scrollEl.style.maxHeight='300px';
+    scrollEl.style.overflowY='auto';
+  }
+  var moreEl=_hoverCardEl.querySelector('.ch-more');
+  if(moreEl)moreEl.style.display='none';
+}
+function hideCalHover(){
+  clearTimeout(_hoverTimeout);
+  if(_hoverCardEl)_hoverCardEl.classList.remove('on');
+}
+function calCellEnter(e,ds){
+  clearTimeout(_hoverTimeout);
+  _hoverTimeout=setTimeout(function(){showCalHover(e,ds)},250);
+  // Also close expanded state
+  if(_hoverCardEl){
+    var scrollEl=_hoverCardEl.querySelector('.ch-scroll');
+    if(scrollEl){scrollEl.style.display='none';scrollEl.style.maxHeight='';scrollEl.style.overflowY=''}
+    var moreEl=_hoverCardEl.querySelector('.ch-more');
+    if(moreEl)moreEl.style.display='';
+  }
+}
+function calCellLeave(){clearTimeout(_hoverTimeout);hideCalHover()}
+
+function navToday(){
+  var today=new Date();calYear=today.getFullYear();calMonth=today.getMonth();_selDate=today.toISOString().slice(0,10);
+  calView='day';loadCal();
+}
+function buildDayView(){
+  if(!_selDate){buildMiniCal();return}
+  var ds=_selDate;
+  var prev=new Date(ds);prev.setDate(prev.getDate()-1);var prevStr=prev.toISOString().slice(0,10);
+  var nxt=new Date(ds);nxt.setDate(nxt.getDate()+1);var nxtStr=nxt.toISOString().slice(0,10);
+  var today=new Date().toISOString().slice(0,10);
+  var wd=['日','一','二','三','四','五','六'][new Date(ds).getDay()];
+  var h='<div class="day-nav"><div><button class="btn btn-o btn-sm" onclick="_selDate=\''+prevStr+'\';buildDayView()">◀ 前一天</button> <span class="dn-date">'+ds+'</span><span class="dn-wd">星期'+wd+'</span> <button class="btn btn-o btn-sm" onclick="_selDate=\''+nxtStr+'\';buildDayView()">后一天 ▶</button></div><div><button class="btn btn-o btn-sm" onclick="calView=\'month\';loadCal()">📅 月视图</button> <button class="btn btn-o btn-sm" onclick="navToday()">📍 今天</button> <button class="btn btn-p btn-sm" onclick="osched()">＋ 新增日程</button></div></div>';
+  var allDayEvts=_schedCache.filter(function(s){return s.is_all_day&&s.start_time&&s.start_time.slice(0,10)<=ds&&s.end_time&&s.end_time.slice(0,10)>=ds});
+  if(allDayEvts.length>0){
+    h+='<div class="day-allday"><span class="da-label">全天</span>';
+    allDayEvts.forEach(function(s){
+      var tc=getTypeCls(s.schedule_type);
+      h+='<span class="da-item '+tc+'" onclick="osched('+s.id+')">'+esc(s.title)+'</span>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="day-timeline">';
+  for(var hr=6;hr<=23;hr++){
+    var hourStr=String(hr).padStart(2,'0')+':00';
+    h+='<div class="day-tl-row"><div class="day-tl-hour">'+hourStr+'</div><div class="day-tl-slot" onclick="osched()"></div></div>';
+  }
+  h+='</div>';
+  var timedEvts=_schedCache.filter(function(s){return !s.is_all_day&&s.start_time&&s.start_time.slice(0,10)===ds});
+  if(timedEvts.length>0){
+    timedEvts.sort(function(a,b){return(a.start_time||'').localeCompare(b.start_time||'')});
+    var evtHtml='';
+    timedEvts.forEach(function(s){
+      var st=s.start_time.slice(11,16);
+      var et=s.end_time?s.end_time.slice(11,16):st;
+      var startMin=parseInt(st.slice(0,2))*60+parseInt(st.slice(3,5));
+      var endMin=parseInt(et.slice(0,2))*60+parseInt(et.slice(3,5));
+      if(endMin<=startMin)endMin=startMin+60;
+      var topPct=Math.max(0,startMin-360)/1080*100;
+      var hPct=Math.max(4,(endMin-startMin)/1080*100);
+      var tc=getTypeCls(s.schedule_type);
+      evtHtml+='<div class="day-evt '+tc+'" style="top:'+topPct+'%;height:'+hPct+'%" onclick="osched('+s.id+')"><div class="dv-t">'+esc(s.title)+'</div><div class="dv-m">'+getTypeLabel(s.schedule_type)+' '+st+'-'+et+(s.location?' | '+esc(s.location):'')+'</div></div>';
+    });
+    var tlIdx=h.indexOf('<div class="day-tl-slot"');
+    if(tlIdx!==-1){
+      h=h.slice(0,tlIdx)+'<div style="position:absolute;left:64px;right:0;top:0;bottom:0;pointer-events:none;z-index:1">'+evtHtml+'</div>'+h.slice(tlIdx);
+    }
+  }
+  $('calArea').innerHTML=h;
+}
 function buildWeekView(){
   var today=new Date(),dow=today.getDay(),mon=new Date(today);mon.setDate(today.getDate()-(dow===0?6:dow-1));
   var days=['日','一','二','三','四','五','六'],tds=today.toISOString().slice(0,10);
@@ -2719,7 +3298,7 @@ function osched(id){
         notes:$('cf_notes').value.trim()
       };
       if(!data.title){toast('请输入标题','err');return}
-      var method=s?'PUT':'POST',url='/api/schedules/'+(s?s.id:'');
+      var method=s?'PUT':'POST',url='/api/schedules'+(s?'/'+s.id:'');
       apiFetch(url,{method:method,body:JSON.stringify(data)}).then(function(r){
         closemodal();loadCal();toast(s?'日程已更新 ✅':'日程已添加 ✅','ok')
       }).catch(function(e){toast('操作失败: '+(e.message||''),'err')})
@@ -2783,7 +3362,7 @@ function smsModal(){
         var startTime=r.hearingDate+'T'+(r.hearingTime||'09:00')+':00';
         var endTime=r.hearingDate+'T12:00:00';
         var data={title:'开庭：'+r.caseNumber,schedule_type:'hearing',start_time:startTime,end_time:endTime,location:r.location||'',notes:'来自12368短信解析\n法官：'+(r.judge||'')+'\n电话：'+(r.phone||''),is_all_day:0,reminder_setting:'3d'};
-        apiFetch('/api/schedules/',{method:'POST',body:JSON.stringify(data)}).then(function(){closemodal();loadCal();toast('已自动创建庭审日程 ✅','ok')}).catch(function(){toast('创建失败','err')})
+        apiFetch('/api/schedules',{method:'POST',body:JSON.stringify(data)}).then(function(){closemodal();loadCal();toast('已自动创建庭审日程 ✅','ok')}).catch(function(){toast('创建失败','err')})
       }
     }
   })
@@ -2826,7 +3405,7 @@ function rbill(){
 
 function initTimer(){if(timerRunning)startTimerDisplay()}
 function formatTimer(s){var hh=Math.floor(s/3600),mm=Math.floor((s%3600)/60),ss=s%60;return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
-function startTimerDisplay(){if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(function(){if(timerRunning){timerSeconds++;var el=$('timerDisp');if(el)el.textContent=formatTimer(timerSeconds)}},1000)}
+function startTimerDisplay(){if(timerInterval)clearInterval(timerInterval);var gb=$('gbTimer');if(gb)gb.style.display=timerRunning?'inline-flex':'none';timerInterval=setInterval(function(){if(timerRunning){timerSeconds++;var el=$('timerDisp');if(el)el.textContent=formatTimer(timerSeconds);var gbDisp=$('gbTimerDisp');if(gbDisp)gbDisp.textContent=formatTimer(timerSeconds)}},1000)}
 
 /* ===== 标签页1：工时记录 ===== */
 function loadTimeRecords(){
@@ -2881,9 +3460,10 @@ function loadTimeRecords(){
 /* ===== 标签页2：账单生成 ===== */
 function loadBillPage(){
   // 加载案件和客户列表
-  Promise.all([apiFetch('/api/cases?limit=200'),apiFetch('/api/clients/simple')]).then(function(results){
+  Promise.all([apiFetch('/api/cases?limit=200'),apiFetch('/api/clients/simple'),apiFetch('/api/settings')]).then(function(results){
     var cases=Array.isArray(results[0])?results[0]:(results[0].items||[]);
     var clients=results[1]||[];
+    var firmSettings=results[2]||{};
 
     var caseOpts='<option value="">-- 选择案件（可选） --</option>';
     cases.forEach(function(c){caseOpts+='<option value="'+c.id+'">'+esc(c.case_number)+' - '+esc(c.case_reason||'')+'</option>'});
@@ -2903,11 +3483,11 @@ function loadBillPage(){
     h+='</div>';
     h+='<div style="margin-top:10px"><label style="font-weight:600;font-size:13px">律所/律师信息</label></div>';
     h+='<div class="fgrid">';
-    h+=inputFld('律所名称','firmName','text','');
-    h+=inputFld('承办律师','lawyerName','text','');
-    h+=inputFld('律所地址','firmAddr','text','');
-    h+=inputFld('电话','firmPhone','text','');
-    h+='<div class="fg fw"><label>银行账户</label><input type="text" id="cf_bankInfo" placeholder="开户行：XX银行  账号：XXXX"></div>';
+    h+=inputFld('律所名称','firmName','text',firmSettings.firm_name||'');
+    h+=inputFld('承办律师','lawyerName','text',firmSettings.lawyer_name||'');
+    h+=inputFld('律所地址','firmAddr','text',firmSettings.firm_address||'');
+    h+=inputFld('电话','firmPhone','text',firmSettings.firm_phone||'');
+    h+='<div class="fg fw"><label>银行账户</label><input type="text" id="cf_bankInfo" value="'+esc(firmSettings.bank_account||'')+'" placeholder="开户行：XX银行  账号：XXXX"></div>';
     h+='</div>';
     h+='<button class="btn btn-p" style="margin-top:10px" onclick="previewBill()">🔄 刷新预览</button>';
     h+='<button class="btn btn-s" style="margin-top:10px" onclick="generateAndExportBill()">📄 生成并导出PDF</button>';
@@ -3085,10 +3665,20 @@ function startTimer(){
 
 function stopTimer(){
   if(!timerRunning||!timerRecordId)return;timerRunning=false;if(timerInterval)clearInterval(timerInterval);
+  var gb=$('gbTimer');if(gb)gb.style.display='none';
   apiFetch('/api/billing/time-records/'+timerRecordId+'/stop',{method:'POST'}).then(function(r){
     var min=r.duration_minutes||1;
     timerRecordId=null;timerCaseName='';render('billing');toast('已保存 '+min+' 分钟工时 ✅','ok')
   }).catch(function(){timerRecordId=null;render('billing');toast('停止失败','err')})
+}
+
+function restoreActiveTimer(){
+  apiFetch('/api/billing/time-records/active').then(function(res){
+    if(res.active&&res.record){
+      timerRunning=true;timerRecordId=res.record.id;timerSeconds=res.elapsed_minutes*60;
+      startTimerDisplay();
+    }
+  }).catch(function(){})
 }
 
 function manualTime(){
@@ -3205,7 +3795,7 @@ function parseMessage(text){
   return r
 }
 function doneTask(id){apiFetch('/api/lw/tasks/'+id,{method:'PUT',body:JSON.stringify({status:'已完成'})}).then(function(){loadMsgData();toast('任务已完成 ✅','ok')}).catch(function(){toast('操作失败','err')})}
-function delTask(id){apiFetch('/api/lw/tasks/'+id,{method:'DELETE'}).then(function(){loadMsgData();toast('已删除','err')}).catch(function(){toast('删除失败','err')})}
+function delTask(id){confirmm('确认删除','确定删除该待办任务吗？',function(){apiFetch('/api/lw/tasks/'+id,{method:'DELETE'}).then(function(){loadMsgData();toast('已删除 ✅','ok')}).catch(function(){toast('删除失败','err')})})}
 
 /* ---- 保全到期提醒 ---- */
 var _presFilter='all',_presSelected=[];
@@ -3784,16 +4374,119 @@ function importLocalCases(){
   };inp.click();
 }
 
-/* ---- 系统管理（完整版：用户增删改查） ---- */
+/* ---- 系统管理（设置 + 用户管理） ---- */
+var _sysTab='firm';
 function rsys(){
-  var h='<div class="pnl"><div class="pnl-hd">👥 用户管理</div><div class="pnl-bd">';
-  h+='<div class="tbar"><div class="tbar-l"><input type="text" id="us_s" placeholder="🔍 搜索用户名..." oninput="loadUsers()" style="width:200px"></div><div class="tbar-r"><button class="btn btn-p" onclick="ouser()">＋ 新增用户</button></div></div>';
-  h+='<div id="usersTable">加载中...</div>';
-  h+='<div style="margin-top:14px;padding:10px 14px;background:var(--light);border-radius:6px;font-size:12px;color:var(--tx3)">';
-  h+='<b>角色权限说明：</b><br>🔑 <b>管理员</b>：全部功能和数据访问<br>👔 <b>执业律师</b>：管理自己的案件和客户<br>📋 <b>律师助理</b>：协助律师，权限受限</div>';
-  h+='</div></div>';
-  setTimeout(loadUsers,50);
+  var h='<div class="sys-tabs">';
+  h+='<span class="sys-tab'+( _sysTab==='firm'?' on':'')+'" onclick="_sysTab=\'firm\';rsys()">🏢 基础信息</span>';
+  h+='<span class="sys-tab'+( _sysTab==='billing'?' on':'')+'" onclick="_sysTab=\'billing\';rsys()">💰 计费设置</span>';
+  h+='<span class="sys-tab'+( _sysTab==='users'?' on':'')+'" onclick="_sysTab=\'users\';rsys()">👥 用户管理</span>';
+  h+='<span class="sys-tab'+( _sysTab==='data'?' on':'')+'" onclick="_sysTab=\'data\';rsys()">🗄️ 数据管理</span>';
+  h+='<span class="sys-tab'+( _sysTab==='about'?' on':'')+'" onclick="_sysTab=\'about\';rsys()">ℹ️ 关于</span>';
+  h+='</div><div id="sysContent">加载中...</div>';
+  setTimeout(function(){loadSysTab()},50);
   return h
+}
+function loadSysTab(){
+  switch(_sysTab){
+    case'firm':loadSysFirm();break;
+    case'billing':loadSysBilling();break;
+    case'users':loadUsers();break;
+    case'data':loadSysData();break;
+    case'about':loadSysAbout();break;
+    default:loadSysFirm();
+  }
+}
+function loadSysFirm(){
+  apiFetch('/api/settings').then(function(s){
+    var h='<div class="pnl"><div class="pnl-hd">🏢 律所/律师信息</div><div class="pnl-bd">';
+    h+='<p style="font-size:12px;color:var(--tx3);margin-bottom:12px">以下信息将自动填充到生成的账单模板中</p>';
+    h+='<div class="fgrid">';
+    h+=inputFld('律所名称','firmName','text',s.firm_name);
+    h+=inputFld('承办律师','lawyerName','text',s.lawyer_name);
+    h+=inputFld('律所地址','firmAddr','text',s.firm_address);
+    h+=inputFld('联系电话','firmPhone','tel',s.firm_phone);
+    h+=inputFld('电子邮箱','lawyerEmail','email',s.lawyer_email);
+    h+='<div class="fg fw"><label>银行账户</label><input type="text" id="cf_bankAccount" value="'+esc(s.bank_account||'')+'" placeholder="开户行：XX银行  账号：XXXX"></div>';
+    h+='</div>';
+    h+='<button class="btn btn-p" style="margin-top:12px" onclick="saveSysFirm()">💾 保存设置</button>';
+    h+='</div></div>';
+    if($('sysContent'))$('sysContent').innerHTML=h;
+  }).catch(function(){if($('sysContent'))$('sysContent').innerHTML='<div class="empty"><p>加载设置失败</p></div>'})
+}
+function saveSysFirm(){
+  var data={
+    firm_name:$('cf_firmName').value.trim(),
+    firm_address:$('cf_firmAddr').value.trim(),
+    firm_phone:$('cf_firmPhone').value.trim(),
+    lawyer_name:$('cf_lawyerName').value.trim(),
+    lawyer_email:$('cf_lawyerEmail').value.trim(),
+    bank_account:$('cf_bankAccount').value.trim()
+  };
+  apiFetch('/api/settings',{method:'PUT',body:JSON.stringify(data)}).then(function(r){
+    toast('律所信息已保存 ✅','ok')
+  }).catch(function(e){toast('保存失败: '+(e.message||'未知错误'),'err')})
+}
+function loadSysBilling(){
+  apiFetch('/api/settings').then(function(s){
+    var h='<div class="pnl"><div class="pnl-hd">💰 计费设置</div><div class="pnl-bd">';
+    h+='<div style="max-width:500px">';
+    h+='<div class="fg"><label>默认小时费率（元/小时）</label><input type="number" id="cf_defaultRate" value="'+(s.default_rate||2000)+'" min="0" step="100" style="width:200px"><p style="font-size:11px;color:var(--tx3);margin-top:4px">新案件的默认计费标准，可在案件详情中覆盖</p></div>';
+    h+='<div class="fg" style="margin-top:16px"><label>常法工时纳入计费统计</label>';
+    h+='<div class="tgl-wrap" onclick="var t=$(\'cf_retainerInBilling\');t.checked=!t.checked;this.querySelector(\'.tgl-track\').classList.toggle(\'on\',t.checked)">';
+    var on=s.retainer_in_billing;
+    h+='<input type="checkbox" id="cf_retainerInBilling" style="display:none"'+(on?' checked':'')+'>';
+    h+='<div class="tgl-track'+(on?' on':'')+'"><div class="tgl-knob"></div></div>';
+    h+='<span style="font-size:13px">'+(on?'已开启':'已关闭')+'</span></div>';
+    h+='<p style="font-size:11px;color:var(--tx3);margin-top:4px">开启后，常法客户的工作记录时长将纳入计时计费模块的工时统计</p></div>';
+    h+='<button class="btn btn-p" style="margin-top:16px" onclick="saveSysBilling()">💾 保存设置</button>';
+    h+='</div></div></div>';
+    if($('sysContent'))$('sysContent').innerHTML=h;
+  }).catch(function(){if($('sysContent'))$('sysContent').innerHTML='<div class="empty"><p>加载设置失败</p></div>'})
+}
+function saveSysBilling(){
+  var rate=parseFloat($('cf_defaultRate').value)||0;
+  var retainerInBilling=$('cf_retainerInBilling').checked;
+  apiFetch('/api/settings',{method:'PUT',body:JSON.stringify({default_rate:rate,retainer_in_billing:retainerInBilling})}).then(function(r){
+    toast('计费设置已保存 ✅','ok');
+    // 更新开关文字
+    var span=document.querySelector('.tgl-wrap span');
+    if(span)span.textContent=retainerInBilling?'已开启':'已关闭';
+  }).catch(function(e){toast('保存失败: '+(e.message||'未知错误'),'err')})
+}
+function loadSysData(){
+  var h='<div class="pnl"><div class="pnl-hd">🗄️ 数据管理</div><div class="pnl-bd">';
+  h+='<div style="max-width:500px">';
+  h+='<div style="padding:16px;border:1px solid var(--warn);border-radius:8px;background:#fef9f7">';
+  h+='<h4 style="color:var(--warn);margin-bottom:8px">⚠️ 危险操作区</h4>';
+  h+='<p style="font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:12px">清空所有业务数据（案件、客户、文档、日程、账单、常法客户、保全记录、消息等）。<br><b>用户账号、律所设置、计费配置将保留。</b><br>模板将在下次服务启动时自动恢复为默认模板。</p>';
+  h+='<button class="btn btn-d" onclick="clearAllData()">🗑 清空所有数据</button>';
+  h+='</div></div></div></div>';
+  if($('sysContent'))$('sysContent').innerHTML=h;
+}
+function clearAllData(){
+  confirmm('⚠️ 清空所有数据','此操作将删除所有案件、客户、文档、日程、账单、常法客户、保全记录、消息等业务数据。用户账号和律所设置将保留。',function(){
+    confirmm('⚠️ 再次确认','该操作不可恢复！确定要清空所有数据吗？',function(){
+      apiFetch('/api/settings/clear-data',{method:'POST',body:JSON.stringify({confirm:true})}).then(function(r){
+        var total=0;for(var k in r.cleared){if(k!=='_seeded')total+=r.cleared[k]}
+        toast('已清空 '+total+' 条记录 ✅','ok')
+      }).catch(function(e){toast('操作失败: '+(e.message||'未知错误'),'err')})
+    })
+  })
+}
+function loadSysAbout(){
+  apiFetch('/api/health').then(function(h){
+    var v=h.version||'1.0.0';
+    var info='<div class="pnl"><div class="pnl-hd">ℹ️ 关于</div><div class="pnl-bd">';
+    info+='<div style="text-align:center;padding:30px 0">';
+    info+='<div style="font-size:48px;margin-bottom:12px">⚖️</div>';
+    info+='<h3 style="margin-bottom:4px">律师智能中心</h3>';
+    info+='<p style="color:var(--tx3);margin-bottom:4px">Lawyer Intelligent Center</p>';
+    info+='<p style="font-size:13px;color:var(--tx2)">版本 '+esc(v)+'</p>';
+    info+='<p style="font-size:12px;color:var(--tx3);margin-top:16px">面向律师的智能化桌面应用<br>案件管理 · 文档处理 · 日程庭审 · AI 辅助</p>';
+    info+='</div></div></div>';
+    if($('sysContent'))$('sysContent').innerHTML=info;
+  }).catch(function(){if($('sysContent'))$('sysContent').innerHTML='<div class="empty"><p>加载失败</p></div>'})
 }
 function loadUsers(){
   apiFetch('/api/users?limit=200').then(function(res){
@@ -3836,9 +4529,12 @@ function ouser(id){
 function toggleUser(id){
   apiFetch('/api/users?limit=200').then(function(res){
     var u=(res.items||[]).find(function(x){return x.id===id});if(!u)return;
-    apiFetch('/api/users/'+id,{method:'PUT',body:JSON.stringify({is_active:u.is_active===false})}).then(function(){
-      loadUsers();toast(u.is_active===false?'已启用 ✅':'已停用 ⛔','ok')
-    }).catch(function(){toast('操作失败','err')})
+    var action=u.is_active===false?'启用':'停用';
+    confirmm(action+'确认','确定要'+action+'该用户吗？',function(){
+      apiFetch('/api/users/'+id,{method:'PUT',body:JSON.stringify({is_active:u.is_active===false})}).then(function(){
+        loadUsers();toast(u.is_active===false?'已启用 ✅':'已停用 ⛔','ok')
+      }).catch(function(){toast('操作失败','err')})
+    })
   })
 }
 
@@ -5469,7 +6165,9 @@ resolveUrlAndGo();
 tick();setInterval(tick,30000);
 setTimeout(checkPresAlertsOnLaunch,1000);
 setTimeout(checkRetainerAlertsOnLaunch,1500);
+setTimeout(restoreActiveTimer,500);
 loadAiHistory();  // 恢复 AI 对话历史
+initSearch();     // 全局搜索
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closemodal()});
 
 // 浏览器前进/后退
