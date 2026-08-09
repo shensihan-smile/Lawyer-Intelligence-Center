@@ -36,6 +36,7 @@ Thumbs.db
 /tmp/
 temp/
 *.tmp
+*served_output*
 backend/app/data/temp/
 
 # Electron
