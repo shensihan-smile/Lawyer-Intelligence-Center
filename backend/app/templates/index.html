@@ -2062,7 +2062,7 @@ function archiveToLocalCase(caseId){
     if(!data.case_category){toast('请选择案由分类','err');return}
     if(!data.province){toast('请填写省份','err');return}
     if(!data.judgment_result){toast('请填写判决结果','err');return}
-    apiFetch('/api/local-cases/',{method:'POST',body:JSON.stringify(data)}).then(function(){
+    apiFetch('/api/local-cases',{method:'POST',body:JSON.stringify(data)}).then(function(){
       closemodal();toast('已归档到本地判例库 ✅','ok');
       // 更新相似案件区块
       loadSimilarCases(c.case_reason,c.court,c.judge);
@@ -2105,7 +2105,7 @@ function quickTodo(caseId){
   h+='<div class="fg fw"><label>优先级</label><select id="cf_todoP"><option>中</option><option>高</option><option>低</option></select></div>';
   fmodal('添加待办',h,function(){
     var title=$('cf_todoTitle').value.trim();if(!title){toast('请输入标题','err');return}
-    apiFetch('/api/lw/tasks/',{method:'POST',body:JSON.stringify({title:title,priority:$('cf_todoP').value,related:_caseDetailData?esc(_caseDetailData.case_number):'',status:'待处理'})}).then(function(){
+    apiFetch('/api/lw/tasks',{method:'POST',body:JSON.stringify({title:title,priority:$('cf_todoP').value,related:_caseDetailData?esc(_caseDetailData.case_number):'',status:'待处理'})}).then(function(){
       closemodal();casDetail(caseId);toast('待办已添加 ✅','ok')
     }).catch(function(){toast('添加失败','err')})
   })
@@ -2362,7 +2362,7 @@ function confirmCreateCase(){
 function doCreateCase(data){
   var btn=$('btnCreateCase');if(btn){btn.disabled=true;btn.textContent='正在创建...'}
 
-  apiFetch('/api/cases/',{method:'POST',body:JSON.stringify(data)}).then(function(cr){
+  apiFetch('/api/cases',{method:'POST',body:JSON.stringify(data)}).then(function(cr){
     var newCaseId=cr.id;
     toast('案件已创建 ✅','ok');
 
@@ -2379,7 +2379,7 @@ function doCreateCase(data){
           case_id:newCaseId,
           notes:'AI解析结果：'+(r.method==='ai'?'智能识别':'基础提取')+' | '+(r.document_type||'other')
         };
-        apiFetch('/api/documents/',{method:'POST',body:JSON.stringify(docData)}).then(function(){
+        apiFetch('/api/documents',{method:'POST',body:JSON.stringify(docData)}).then(function(){
           done++;if(done>=total){_parseResult=null;navToCase(newCaseId)}
         }).catch(function(){done++;if(done>=total){_parseResult=null;navToCase(newCaseId)}});
       });
@@ -2918,7 +2918,7 @@ function linkUploadToCase(){
       var caseId=parseInt($('cf_caseSelect').value);
       var done=0,total=_uploadResults.length;
       _uploadResults.forEach(function(r){
-        apiFetch('/api/documents/',{method:'POST',body:JSON.stringify({
+        apiFetch('/api/documents',{method:'POST',body:JSON.stringify({
           original_name:r.file_name||'OCR文档',
           doc_category:'其他',
           case_id:caseId,
@@ -3769,9 +3769,9 @@ function msgModal(){
   fmodal('录入消息',h,function(){
     var content=$('cf_content').value.trim();if(!content){toast('请输入消息内容','err');return}
     var r=parseMessage(content),source=$('cf_source').value;
-    apiFetch('/api/lw/messages/',{method:'POST',body:JSON.stringify({source:source,content:content,result:r.summary})}).then(function(){
+    apiFetch('/api/lw/messages',{method:'POST',body:JSON.stringify({source:source,content:content,result:r.summary})}).then(function(){
       if(r.task){
-        apiFetch('/api/lw/tasks/',{method:'POST',body:JSON.stringify({title:r.task,priority:r.priority,related:r.client||r.caseNum||'',deadline:r.deadline||'',status:'待处理'})}).then(function(){
+        apiFetch('/api/lw/tasks',{method:'POST',body:JSON.stringify({title:r.task,priority:r.priority,related:r.client||r.caseNum||'',deadline:r.deadline||'',status:'待处理'})}).then(function(){
           closemodal();loadMsgData();toast('消息已识别，已生成待办 ✅','ok')
         }).catch(function(){closemodal();loadMsgData()})
       }else{closemodal();loadMsgData();toast('消息已保存 ✅','ok')}
@@ -3901,7 +3901,7 @@ function addPreservation(caseId){
     };
     if(!data.target){toast('请输入被保全标的','err');return}
     if(!data.end_date){toast('请选择到期日期','err');return}
-    apiFetch('/api/preservations/',{method:'POST',body:JSON.stringify(data)}).then(function(){
+    apiFetch('/api/preservations',{method:'POST',body:JSON.stringify(data)}).then(function(){
       closemodal();loadPreservations(caseId);toast('保全记录已添加 ✅','ok')
     }).catch(function(e){toast('操作失败: '+(e.message||'未知错误'),'err')})
   })
@@ -4364,7 +4364,7 @@ function importLocalCases(){
         var done=0,total=data.length,errors=0;
         toast('正在导入 '+total+' 条判例...','ok');
         data.forEach(function(item){
-          apiFetch('/api/local-cases/',{method:'POST',body:JSON.stringify(item)}).then(function(){
+          apiFetch('/api/local-cases',{method:'POST',body:JSON.stringify(item)}).then(function(){
             done++;if(done>=total){loadLocalCases();toast('成功导入 '+(total-errors)+'/'+total+' 条判例 ✅','ok')}
           }).catch(function(){errors++;done++;if(done>=total){loadLocalCases();toast('导入完成，成功 '+(total-errors)+'/'+total+' 条','ok')}});
         });
@@ -5146,7 +5146,7 @@ function saveTemplate(){
     // 新建模板
     // 如果是新建分类，先创建分类
     var createTpl=function(){
-      apiFetch('/api/templates/',{method:'POST',body:JSON.stringify(data)}).then(function(){
+      apiFetch('/api/templates',{method:'POST',body:JSON.stringify(data)}).then(function(){
         toast('模板创建成功 ✅','ok');
         navTo('templateCenter');
         setTimeout(function(){loadTemplateCategories();loadTemplates(category)},100)
